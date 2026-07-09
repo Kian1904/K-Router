@@ -6,16 +6,10 @@ const PROVIDERS = [
     model: 'llama-3.3-70b-versatile'
   },
   {
-    name: 'Cerebras',
-    url: 'https://api.cerebras.ai/v1/chat/completions',
-    key: process.env.CEREBRAS_API_KEY,
-    model: 'llama-3.3-70b'
-  },
-  {
-    name: 'OpenRouter',
-    url: 'https://openrouter.ai/api/v1/chat/completions',
-    key: process.env.OPENROUTER_API_KEY,
-    model: 'meta-llama/llama-3.3-70b-instruct:free'
+    name: 'Gemini',
+    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    key: process.env.GEMINI_API_KEY,
+    model: 'gemini-2.0-flash'
   }
 ]
 
