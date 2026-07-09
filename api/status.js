@@ -35,6 +35,7 @@ const PROVIDERS = [
     key: 'OPENROUTER_API_KEY',
     model: 'google/gemma-4-31b-it:free'
   }
+]
 
 module.exports = function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
