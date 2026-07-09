@@ -13,11 +13,11 @@ const PROVIDERS = {
     model: 'gpt-4o-mini'
   },
 
-  sambanova: {
-    name: 'SambaNova',
-    url: 'https://api.sambanova.ai/v1/chat/completions',
-    key: process.env.SAMBANOVA_API_KEY,
-    model: 'Meta-Llama-3.3-70B-Instruct'
+  nvidia: {
+    name: 'NVIDIA NIM',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: process.env.NVIDIA_API_KEY,
+    model: 'qwen/qwen3.5-397b-a17b'
   },
 
   // Model identifier verified: 'deepseek-ai/deepseek-v4-flash' is the correct
