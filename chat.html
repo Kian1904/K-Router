@@ -167,6 +167,7 @@
 
     document.getElementById('save-token').onclick = () => {
       const val = tokenInput.value.trim()
+      console.log('Token saved:', val)
       if (!val) return
       TOKEN = val
       localStorage.setItem('kr_token', val)
