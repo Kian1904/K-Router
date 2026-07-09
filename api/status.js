@@ -28,8 +28,13 @@ const PROVIDERS = [
     name: 'Kilo Gateway',
     key: 'KILO_API_KEY',
     model: 'anthropic/claude-haiku-4.5'
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    key: 'OPENROUTER_API_KEY',
+    model: 'google/gemma-4-31b-it:free'
   }
-]
 
 module.exports = function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
