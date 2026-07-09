@@ -7,7 +7,7 @@ const PROVIDERS = {
   },
   gemini: {
     name: 'Gemini',
-    url: `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${p.key}',
+    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     key: process.env.GEMINI_API_KEY,
     model: 'gemini-2.0-flash'
   },
@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const auth = req.headers.authorization
-  if (!auth || auth !== `Bearer ${process.env.BEARER_TOKEN}`) {
+  if (!auth || auth !== 'Bearer ' + process.env.BEARER_TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
@@ -56,10 +56,10 @@ module.exports = async function handler(req, res) {
     try {
       const headers = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${p.key}`
+        'Authorization': 'Bearer ' + p.key
       }
       if (id === 'openrouter') {
-        headers['HTTP-Referer'] = 'https://krouter.vercel.app'
+        headers['HTTP-Referer'] = 'https://k-router-iota.vercel.app'
         headers['X-Title'] = "K's Router"
       }
 
@@ -69,14 +69,14 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({ model: p.model, messages, ...rest })
       })
 
-      if (!response.ok) { console.error(`${p.name} failed:`, response.status); continue }
+      if (!response.ok) { console.error(p.name + ' failed:', response.status); continue }
 
       const data = await response.json()
       data._provider = p.name
       return res.status(200).json(data)
 
     } catch (err) {
-      console.error(`${p.name} error:`, err.message)
+      console.error(p.name + ' error:', err.message)
       continue
     }
   }
