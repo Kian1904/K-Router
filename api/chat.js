@@ -32,7 +32,15 @@ const PROVIDERS = {
     url: 'https://api.kilo.ai/api/gateway/chat/completions',
     key: process.env.KILO_API_KEY,
     model: 'anthropic/claude-haiku-4.5'
+  },
+  
+  openrouter: {
+    name: 'Open Router',
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: proncess.env.OPENROUTER_API_KEY,
+    model: 'google/gemma-4-31b-it:free'
   }
+  
 }
 
 const CASCADE = [
