@@ -27,7 +27,7 @@ const PROVIDERS = [
     id: 'kilo',
     name: 'Kilo Gateway',
     key: 'KILO_API_KEY',
-    model: 'anthropic/claude-sonnet-4.6'
+    model: 'anthropic/claude-haiku-4.5'
   }
 ]
 
