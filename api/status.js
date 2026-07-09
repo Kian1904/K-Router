@@ -12,10 +12,10 @@ const PROVIDERS = [
     model: 'gpt-4o-mini'
   },
   {
-    id: 'sambanova',
-    name: 'SambaNova',
-    key: 'SAMBANOVA_API_KEY',
-    model: 'Meta-Llama-3.3-70B-Instruct'
+    id: 'nvidia',
+    name: 'NVIDIA NIM',
+    key: 'NVIDIA_API_KEY',
+    model: 'qwen/qwen3.5-397b-a17b'
   },
   {
     id: 'nvidia',
