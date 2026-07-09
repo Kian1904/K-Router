@@ -1,17 +1,37 @@
-const PROVIDERS = [
-  {
+const PROVIDERS = {
+  groq: {
     name: 'Groq',
     url: 'https://api.groq.com/openai/v1/chat/completions',
     key: process.env.GROQ_API_KEY,
     model: 'llama-3.3-70b-versatile'
   },
-  {
+  gemini: {
     name: 'Gemini',
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     key: process.env.GEMINI_API_KEY,
     model: 'gemini-2.0-flash'
+  },
+  sambanova: {
+    name: 'SambaNova',
+    url: 'https://api.sambanova.ai/v1/chat/completions',
+    key: process.env.SAMBANOVA_API_KEY,
+    model: 'DeepSeek-R1'
+  },
+  cerebras: {
+    name: 'Cerebras',
+    url: 'https://api.cerebras.ai/v1/chat/completions',
+    key: process.env.CEREBRAS_API_KEY,
+    model: 'llama-3.3-70b'
+  },
+  openrouter: {
+    name: 'OpenRouter',
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: process.env.OPENROUTER_API_KEY,
+    model: 'deepseek/deepseek-r1:free'
   }
-]
+}
+
+const CASCADE = ['groq', 'gemini', 'sambanova', 'cerebras', 'openrouter']
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -22,44 +42,44 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const auth = req.headers.authorization
-  if (!auth || auth.trim() !== `Bearer ${process.env.BEARER_TOKEN?.trim()}`) {
+  if (!auth || auth !== `Bearer ${process.env.BEARER_TOKEN}`) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  const { messages, ...rest } = req.body
-  const errors = []
+  const { messages, provider: selected, ...rest } = req.body
+  const targets = selected && PROVIDERS[selected] ? [selected] : CASCADE
 
-  for (const provider of PROVIDERS) {
-    if (!provider.key) {
-      errors.push(`${provider.name}: no API key`)
-      continue
-    }
+  for (const id of targets) {
+    const p = PROVIDERS[id]
+    if (!p.key) continue
 
     try {
-      const response = await fetch(provider.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${provider.key}`
-        },
-        body: JSON.stringify({ model: provider.model, messages, ...rest })
-      })
-
-      if (!response.ok) {
-        const errText = await response.text()
-        errors.push(`${provider.name}: ${response.status} — ${errText.slice(0, 100)}`)
-        continue
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${p.key}`
+      }
+      if (id === 'openrouter') {
+        headers['HTTP-Referer'] = 'https://krouter.vercel.app'
+        headers['X-Title'] = "K's Router"
       }
 
+      const response = await fetch(p.url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ model: p.model, messages, ...rest })
+      })
+
+      if (!response.ok) { console.error(`${p.name} failed:`, response.status); continue }
+
       const data = await response.json()
-      data._provider = provider.name
+      data._provider = p.name
       return res.status(200).json(data)
 
     } catch (err) {
-      errors.push(`${provider.name}: ${err.message}`)
+      console.error(`${p.name} error:`, err.message)
       continue
     }
   }
 
-  return res.status(503).json({ error: 'All providers failed', details: errors })
+  return res.status(503).json({ error: 'All providers failed' })
 }
