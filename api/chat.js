@@ -37,7 +37,7 @@ const PROVIDERS = {
   openrouter: {
     name: 'Open Router',
     url: 'https://openrouter.ai/api/v1/chat/completions',
-    key: proncess.env.OPENROUTER_API_KEY,
+    key: process.env.OPENROUTER_API_KEY,
     model: 'google/gemma-4-31b-it:free'
   }
   
