@@ -5,31 +5,43 @@ const PROVIDERS = {
     key: process.env.GROQ_API_KEY,
     model: 'llama-3.3-70b-versatile'
   },
-  gemini: {
-    name: 'Gemini',
-    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    key: process.env.GEMINI_API_KEY,
-    model: 'gemini-2.0-flash'
+
+  flatkey: {
+    name: 'FlatKey',
+    url: 'https://console.flatkey.ai/v1/chat/completions',
+    key: process.env.FLATKEY_API_KEY,
+    model: 'gpt-4o-mini'
   },
+
   sambanova: {
     name: 'SambaNova',
     url: 'https://api.sambanova.ai/v1/chat/completions',
     key: process.env.SAMBANOVA_API_KEY,
     model: 'Meta-Llama-3.3-70B-Instruct'
   },
-  cerebras: {
-    name: 'Cerebras',
-    url: 'https://api.cerebras.ai/v1/chat/completions',
-    key: process.env.CEREBRAS_API_KEY,
-    model: 'llama-3.3-70b'
+
+  nvidia: {
+    name: 'NVIDIA NIM',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: process.env.NVIDIA_API_KEY,
+    model: 'openai/gpt-oss-120b'
   },
-  openrouter: {
-    name: 'OpenRouter',
-    url: 'https://openrouter.ai/api/v1/chat/completions',
-    key: process.env.OPENROUTER_API_KEY,
-    model: 'deepseek/deepseek-r1:free'
+
+  kilo: {
+    name: 'Kilo Gateway',
+    url: 'https://api.kilo.ai/api/gateway/chat/completions',
+    key: process.env.KILO_API_KEY,
+    model: 'anthropic/claude-sonnet-4.5'
   }
 }
+
+const CASCADE = [
+  'groq',
+  'flatkey',
+  'sambanova',
+  'nvidia',
+  'kilo'
+]
 
 const CASCADE = ['groq', 'gemini', 'sambanova', 'cerebras', 'openrouter']
 
