@@ -1,1 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K's Router — Chat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #060910;
+      color: #f1f5f9;
+      font-family: system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1rem; color: #4ade80; }
+    #provider-badge {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .bubble {
+      max-width: 85%;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .bubble.user {
+      background: rgba(56,189,248,0.12);
+      align-self: flex-end;
+      border: 1px solid rgba(56,189,248,0.15);
+    }
+    .bubble.ai {
+      background: rgba(255,255,255,0.04);
+      align-self: flex-start;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .bubble.error {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.2);
+      color: #f87171;
+      align-self: flex-start;
+    }
+    footer {
+      padding: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      gap: 0.5rem;
+    }
+    textarea {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      color: #f1f5f9;
+      padding: 0.75rem;
+      font-size: 0.9rem;
+      resize: none;
+      height: 44px;
+      max-height: 120px;
+      font-family: inherit;
+      outline: none;
+    }
+    textarea:focus { border-color: rgba(74,222,128,0.4); }
+    button#send {
+      background: #4ade80;
+      color: #060910;
+      border: none;
+      border-radius: 10px;
+      padding: 0 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button#send:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* Token setup overlay */
+    #setup {
+      position: fixed;
+      inset: 0;
+      background: #060910;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 2rem;
+      z-index: 10;
+    }
+    #setup h2 { color: #4ade80; font-size: 1.1rem; }
+    #setup p { color: #94a3b8; font-size: 0.85rem; text-align: center; }
+    #token-input {
+      width: 100%;
+      max-width: 320px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: #f1f5f9;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      outline: none;
+      font-family: monospace;
+    }
+    #save-token {
+      background: #4ade80;
+      color: #060910;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="setup">
+    <h2>K's Router</h2>
+    <p>Masukkan bearer token lo untuk mulai.</p>
+    <input id="token-input" type="password" placeholder="Bearer token..." />
+    <button id="save-token">Simpan & Mulai</button>
+  </div>
+
+  <header>
+    <h1>K's Router</h1>
+    <span id="provider-badge">—</span>
+  </header>
+
+  <div id="messages"></div>
+
+  <footer>
+    <textarea id="input" placeholder="Ketik pesan..." rows="1"></textarea>
+    <button id="send">Kirim</button>
+  </footer>
+
+  <script>
+    const ENDPOINT = '/api/chat'
+    let TOKEN = localStorage.getItem('kr_token') || ''
+    let history = []
+
+    // Setup overlay
+    const setupEl = document.getElementById('setup')
+    const tokenInput = document.getElementById('token-input')
+
+    function checkToken() {
+      if (TOKEN) setupEl.style.display = 'none'
+    }
+    checkToken()
+
+    document.getElementById('save-token').onclick = () => {
+      const val = tokenInput.value.trim()
+      if (!val) return
+      TOKEN = val
+      localStorage.setItem('kr_token', val)
+      setupEl.style.display = 'none'
+    }
+
+    // Chat
+    const messagesEl = document.getElementById('messages')
+    const inputEl = document.getElementById('input')
+    const sendBtn = document.getElementById('send')
+    const providerBadge = document.getElementById('provider-badge')
+
+    function addBubble(text, type) {
+      const div = document.createElement('div')
+      div.className = `bubble ${type}`
+      div.textContent = text
+      messagesEl.appendChild(div)
+      messagesEl.scrollTop = messagesEl.scrollHeight
+      return div
+    }
+
+    async function send() {
+      const text = inputEl.value.trim()
+      if (!text) return
+
+      inputEl.value = ''
+      sendBtn.disabled = true
+      history.push({ role: 'user', content: text })
+      addBubble(text, 'user')
+
+      const thinking = addBubble('...', 'ai')
+
+      try {
+        const res = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${TOKEN}`
+          },
+          body: JSON.stringify({ messages: history })
+        })
+
+        if (res.status === 401) {
+          thinking.className = 'bubble error'
+          thinking.textContent = 'Unauthorized — token salah. Refresh dan coba lagi.'
+          localStorage.removeItem('kr_token')
+          return
+        }
+
+        const data = await res.json()
+        const reply = data.choices?.[0]?.message?.content || 'No response.'
+
+        thinking.textContent = reply
+        history.push({ role: 'assistant', content: reply })
+        providerBadge.textContent = data._provider || '—'
+
+      } catch (err) {
+        thinking.className = 'bubble error'
+        thinking.textContent = 'Request failed: ' + err.message
+      } finally {
+        sendBtn.disabled = false
+        inputEl.focus()
+      }
+    }
+
+    sendBtn.onclick = send
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+    })
+
+    // Auto-resize textarea
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = '44px'
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px'
+    })
+  </script>
+</body>
+</html>
