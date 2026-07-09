@@ -31,7 +31,7 @@ const PROVIDERS = {
     name: 'Kilo Gateway',
     url: 'https://api.kilo.ai/api/gateway/chat/completions',
     key: process.env.KILO_API_KEY,
-    model: 'anthropic/claude-sonnet-4.6'
+    model: 'anthropic/claude-haiku-4.5'
   }
 }
 
