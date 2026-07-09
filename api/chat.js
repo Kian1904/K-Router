@@ -7,7 +7,7 @@ const PROVIDERS = {
   },
   gemini: {
     name: 'Gemini',
-    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    url: `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${p.key}',
     key: process.env.GEMINI_API_KEY,
     model: 'gemini-2.0-flash'
   },
@@ -15,7 +15,7 @@ const PROVIDERS = {
     name: 'SambaNova',
     url: 'https://api.sambanova.ai/v1/chat/completions',
     key: process.env.SAMBANOVA_API_KEY,
-    model: 'DeepSeek-R1'
+    model: 'Meta-Llama-3.3-70B-Instruct'
   },
   cerebras: {
     name: 'Cerebras',
