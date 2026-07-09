@@ -21,7 +21,7 @@ const PROVIDERS = [
     id: 'nvidia',
     name: 'NVIDIA NIM',
     key: 'NVIDIA_API_KEY',
-    model: 'openai/gpt-oss-120b'
+    model: 'nvidia/glm-5-2'
   },
   {
     id: 'kilo',
