@@ -2,7 +2,7 @@ const PROVIDERS = [
   {
     name: 'Groq',
     url: 'https://api.groq.com/openai/v1/chat/completions',
-    key: process.env.Groq_Api_Key,
+    key: process.env.Groq_api_key,
     model: 'llama-3.3-70b-versatile'
   },
   {
