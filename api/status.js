@@ -23,7 +23,7 @@ const PROVIDERS = [
     key: 'NVIDIA_API_KEY',
     // Verified model identifier: deepseek-ai/deepseek-v4-flash
     // Source: https://build.nvidia.com/deepseek-ai/deepseek-v4-flash/modelcard
-    model: 'deepseek-ai/deepseek-v4-flash'
+    model: 'deepseek-ai/deepseek-v4-pro"'
   },
   {
     id: 'kilo',
