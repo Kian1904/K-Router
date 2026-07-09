@@ -20,6 +20,9 @@ const PROVIDERS = {
     model: 'Meta-Llama-3.3-70B-Instruct'
   },
 
+  // Model identifier verified: 'deepseek-ai/deepseek-v4-flash' is the correct
+  // model string for NVIDIA NIM (DeepSeek V4 Flash). See:
+  // https://build.nvidia.com/deepseek-ai/deepseek-v4-flash/modelcard
   nvidia: {
     name: 'NVIDIA NIM',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
