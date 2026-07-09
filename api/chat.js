@@ -8,7 +8,7 @@ const PROVIDERS = [
   {
     name: 'Gemini',
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    key: process.env.GEMINI_API_KEY,
+    key: process.env.Gemini_Api_Key,
     model: 'gemini-2.0-flash'
   }
 ]
