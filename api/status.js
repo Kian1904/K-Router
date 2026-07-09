@@ -21,7 +21,7 @@ const PROVIDERS = [
     id: 'nvidia',
     name: 'NVIDIA NIM',
     key: 'NVIDIA_API_KEY',
-    model: 'nvidia/glm-5-2'
+    model: 'deepseek-ai/deepseek-v4-flash'
   },
   {
     id: 'kilo',
