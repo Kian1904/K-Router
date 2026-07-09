@@ -43,8 +43,6 @@ const CASCADE = [
   'kilo'
 ]
 
-const CASCADE = ['groq', 'gemini', 'sambanova', 'cerebras', 'openrouter']
-
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -69,10 +67,6 @@ module.exports = async function handler(req, res) {
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + p.key
-      }
-      if (id === 'openrouter') {
-        headers['HTTP-Referer'] = 'https://k-router-iota.vercel.app'
-        headers['X-Title'] = "K's Router"
       }
 
       const response = await fetch(p.url, {
