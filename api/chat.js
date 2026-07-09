@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const auth = req.headers.authorization
-  if (!auth || auth !== `Bearer ${process.env.BEARER_TOKEN}`) {
+  if (!auth || auth.trim() !== `Bearer ${process.env.BEARER_TOKEN?.trim()}`) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
