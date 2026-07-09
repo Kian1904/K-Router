@@ -199,7 +199,8 @@
       addBubble(text, 'user')
 
       const thinking = addBubble('...', 'ai')
-
+      consloge.log('Sending with token:', TOKEN)
+      
       try {
         const res = await fetch(ENDPOINT, {
           method: 'POST',
