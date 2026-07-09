@@ -15,16 +15,28 @@
       flex-direction: column;
     }
     header {
-      padding: 1rem 1.25rem;
+      padding: 0.75rem 1.25rem;
       border-bottom: 1px solid rgba(255,255,255,0.07);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 0.75rem;
     }
-    header h1 { font-size: 1rem; color: #4ade80; }
+    header h1 { font-size: 1rem; color: #4ade80; white-space: nowrap; }
+    select#provider-select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #f1f5f9;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.6rem;
+      outline: none;
+      cursor: pointer;
+    }
     #provider-badge {
       font-size: 0.75rem;
-      color: #94a3b8;
+      color: #4ade80;
+      white-space: nowrap;
     }
     #messages {
       flex: 1;
@@ -90,8 +102,6 @@
       font-size: 0.9rem;
     }
     button#send:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* Token setup overlay */
     #setup {
       position: fixed;
       inset: 0;
@@ -104,8 +114,9 @@
       padding: 2rem;
       z-index: 10;
     }
-    #setup h2 { color: #4ade80; font-size: 1.1rem; }
+    #setup h2 { color: #4ade80; }
     #setup p { color: #94a3b8; font-size: 0.85rem; text-align: center; }
+    #setup.hidden { display: none; }
     #token-input {
       width: 100%;
       max-width: 320px;
@@ -118,6 +129,8 @@
       outline: none;
       font-family: monospace;
     }
+    #token-input.error { border-color: #f87171; }
+    #setup-error { color: #f87171; font-size: 0.8rem; display: none; }
     #save-token {
       background: #4ade80;
       color: #060910;
@@ -126,7 +139,6 @@
       padding: 0.75rem 2rem;
       font-weight: 600;
       cursor: pointer;
-      font-size: 0.9rem;
     }
   </style>
 </head>
@@ -134,13 +146,22 @@
 
   <div id="setup">
     <h2>K's Router</h2>
-    <p>Masukkan bearer token lo untuk mulai.</p>
+    <p>Masukkan bearer token untuk mulai.</p>
     <input id="token-input" type="password" placeholder="Bearer token..." />
-    <button id="save-token">Simpan & Mulai</button>
+    <p id="setup-error">Token salah, coba lagi.</p>
+    <button id="save-token">Masuk</button>
   </div>
 
   <header>
     <h1>K's Router</h1>
+    <select id="provider-select">
+      <option value="">Auto</option>
+      <option value="groq">Groq — Llama 3.3 70B</option>
+      <option value="gemini">Gemini — 2.0 Flash</option>
+      <option value="sambanova">SambaNova — DeepSeek R1</option>
+      <option value="cerebras">Cerebras — Llama 3.3 70B</option>
+      <option value="openrouter">OpenRouter — DeepSeek R1</option>
+    </select>
     <span id="provider-badge">—</span>
   </header>
 
@@ -152,106 +173,119 @@
   </footer>
 
   <script>
-const ENDPOINT = '/api/chat'
-let TOKEN = localStorage.getItem('kr_token') || ''
-let history = []
+    const ENDPOINT = '/api/chat'
+    let TOKEN = localStorage.getItem('kr_token') || ''
+    let history = []
 
-const setupEl = document.getElementById('setup')
-const tokenInput = document.getElementById('token-input')
-const setupError = document.createElement('p')
-setupError.style.cssText = 'color:#f87171;font-size:0.8rem;display:none'
-document.getElementById('save-token').after(setupError)
+    const setupEl = document.getElementById('setup')
+    const tokenInput = document.getElementById('token-input')
+    const setupError = document.getElementById('setup-error')
 
-function checkToken() {
-  if (TOKEN) setupEl.style.display = 'none'
-}
-checkToken()
+    if (TOKEN) setupEl.classList.add('hidden')
 
-document.getElementById('save-token').onclick = () => {
-  const val = tokenInput.value.trim()
-  if (!val) return
-  TOKEN = val
-  localStorage.setItem('kr_token', val)
-  setupEl.style.display = 'none'
-}
+    document.getElementById('save-token').onclick = async () => {
+      const val = tokenInput.value.trim()
+      if (!val) return
 
-const messagesEl = document.getElementById('messages')
-const inputEl = document.getElementById('input')
-const sendBtn = document.getElementById('send')
-const providerBadge = document.getElementById('provider-badge')
+      // Verify token before saving
+      try {
+        const test = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${val}`
+          },
+          body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
+        })
+        if (test.status === 401) {
+          tokenInput.classList.add('error')
+          setupError.style.display = 'block'
+          return
+        }
+      } catch (_) {}
 
-function addBubble(text, type) {
-  const div = document.createElement('div')
-  div.className = `bubble ${type}`
-  div.textContent = text
-  messagesEl.appendChild(div)
-  messagesEl.scrollTop = messagesEl.scrollHeight
-  return div
-}
+      TOKEN = val
+      localStorage.setItem('kr_token', val)
+      setupEl.classList.add('hidden')
+    }
 
-async function send() {
-  const text = inputEl.value.trim()
-  if (!text) return
+    const messagesEl = document.getElementById('messages')
+    const inputEl = document.getElementById('input')
+    const sendBtn = document.getElementById('send')
+    const providerBadge = document.getElementById('provider-badge')
+    const providerSelect = document.getElementById('provider-select')
 
-  inputEl.value = ''
-  inputEl.style.height = '44px'
-  sendBtn.disabled = true
-  history.push({ role: 'user', content: text })
-  addBubble(text, 'user')
+    function addBubble(text, type) {
+      const div = document.createElement('div')
+      div.className = `bubble ${type}`
+      div.textContent = text
+      messagesEl.appendChild(div)
+      messagesEl.scrollTop = messagesEl.scrollHeight
+      return div
+    }
 
-  const thinking = addBubble('...', 'ai')
+    async function send() {
+      const text = inputEl.value.trim()
+      if (!text) return
 
-  try {
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${TOKEN}`
-      },
-      body: JSON.stringify({ messages: history })
+      inputEl.value = ''
+      inputEl.style.height = '44px'
+      sendBtn.disabled = true
+      history.push({ role: 'user', content: text })
+      addBubble(text, 'user')
+
+      const thinking = addBubble('...', 'ai')
+      const selectedProvider = providerSelect.value
+
+      try {
+        const body = { messages: history }
+        if (selectedProvider) body.provider = selectedProvider
+
+        const res = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${TOKEN}`
+          },
+          body: JSON.stringify(body)
+        })
+
+        if (res.status === 401) {
+          thinking.className = 'bubble error'
+          thinking.textContent = 'Unauthorized — token salah.'
+          localStorage.removeItem('kr_token')
+          setupEl.classList.remove('hidden')
+          return
+        }
+
+        if (!res.ok) {
+          thinking.className = 'bubble error'
+          thinking.textContent = `Error ${res.status} — semua provider gagal.`
+          return
+        }
+
+        const data = await res.json()
+        const reply = data.choices?.[0]?.message?.content || 'No response.'
+        thinking.textContent = reply
+        history.push({ role: 'assistant', content: reply })
+        providerBadge.textContent = data._provider || '—'
+
+      } catch (err) {
+        thinking.className = 'bubble error'
+        thinking.textContent = 'Request failed: ' + err.message
+      } finally {
+        sendBtn.disabled = false
+      }
+    }
+
+    sendBtn.onclick = send
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
     })
-
-    const data = await res.json()
-
-    if (res.status === 401) {
-      thinking.className = 'bubble error'
-      thinking.textContent = 'Unauthorized — token salah. Refresh dan input ulang.'
-      localStorage.removeItem('kr_token')
-      TOKEN = ''
-      return
-    }
-
-    if (!res.ok) {
-      thinking.className = 'bubble error'
-      const detail = data.details ? '\n' + data.details.join('\n') : ''
-      thinking.textContent = `Error: ${data.error || res.status}${detail}`
-      history.pop()
-      return
-    }
-
-    const reply = data.choices?.[0]?.message?.content || 'No response.'
-    thinking.textContent = reply
-    history.push({ role: 'assistant', content: reply })
-    providerBadge.textContent = data._provider || '—'
-
-  } catch (err) {
-    thinking.className = 'bubble error'
-    thinking.textContent = 'Request failed: ' + err.message
-    history.pop()
-  } finally {
-    sendBtn.disabled = false
-    inputEl.focus()
-  }
-}
-
-sendBtn.onclick = send
-inputEl.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
-})
-inputEl.addEventListener('input', () => {
-  inputEl.style.height = '44px'
-  inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px'
-})
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = '44px'
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px'
+    })
   </script>
-  </body>
-</html>
+</body>
+  </html>
