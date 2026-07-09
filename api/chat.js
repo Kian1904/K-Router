@@ -27,7 +27,7 @@ const PROVIDERS = {
     name: 'NVIDIA NIM',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
     key: process.env.NVIDIA_API_KEY,
-    model: 'deepseek-ai/deepseek-v4-pro"'
+    model: 'deepseek-ai/deepseek-v4-flash"'
   },
 
   kilo: {
