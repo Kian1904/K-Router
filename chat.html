@@ -273,29 +273,50 @@
   }
 
   async function doSearch(query) {
-    const searching = addBubble('Searching: ' + query + '...', 'ai')
-    try {
-      const res = await fetch(SEARCH_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-        body: JSON.stringify({ query })
-      })
-      const data = await res.json()
-      searching.remove()
-      addSearchBubble(data, query)
+  const searching = addBubble('Searching: ' + query + '...', 'ai')
+  try {
+    const res = await fetch(SEARCH_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ query })
+    })
+    const data = await res.json()
+    searching.remove()
+    addSearchBubble(data, query)
 
-      // Inject ke history sebagai context
-      const context = 'Search results for "' + query + '":\n\n' +
-        (data.answer ? 'Summary: ' + data.answer + '\n\n' : '') +
-        data.results.map((r, i) => (i+1) + '. ' + r.title + '\n' + r.content).join('\n\n')
-      history.push({ role: 'user', content: context })
-      history.push({ role: 'assistant', content: 'Got it. I have the search results. What would you like to know?' })
+    // Langsung tanya AI berdasarkan hasil search
+    const context = 'Use ONLY the following search results to answer. Do not use prior knowledge.\n\n' +
+      'Search results for "' + query + '":\n\n' +
+      (data.answer ? 'Summary: ' + data.answer + '\n\n' : '') +
+      data.results.map((r, i) => (i+1) + '. ' + r.title + '\n' + r.content).join('\n\n') +
+      '\n\nBased on the above, answer: ' + query
 
-    } catch (err) {
-      searching.className = 'bubble error'
-      searching.textContent = 'Search failed: ' + err.message
-    }
+    history.push({ role: 'user', content: context })
+    sendBtn.disabled = true
+    const thinking = addBubble('...', 'ai')
+
+    const body = { messages: history }
+    const selectedProvider = providerSelect.value
+    if (selectedProvider) body.provider = selectedProvider
+
+    const aiRes = await fetch(CHAT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify(body)
+    })
+
+    const aiData = await aiRes.json()
+    const reply = aiData.choices?.[0]?.message?.content || 'No response.'
+    thinking.textContent = reply
+    history.push({ role: 'assistant', content: reply })
+    providerBadge.textContent = aiData._provider || '—'
+
+  } catch (err) {
+    addBubble('Search failed: ' + err.message, 'error')
+  } finally {
+    sendBtn.disabled = false
   }
+    }
 
   async function send() {
     const text = inputEl.value.trim()
