@@ -1,6 +1,6 @@
 const PROVIDERS = [
-  { name: 'Groq', key: 'GROQ_API_KEY', model: 'llama-3.3-70b-versatile' },
-  { name: 'Gemini', key: 'GEMINI_API_KEY', model: 'gemini-2.0-flash' }
+  { name: 'Groq', key: 'Groq_Api_Key', model: 'llama-3.3-70b-versatile' },
+  { name: 'Gemini', key: 'Gemini_Api_key', model: 'gemini-2.0-flash' }
 ]
 
 module.exports = function handler(req, res) {
