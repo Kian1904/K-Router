@@ -1,9 +1,29 @@
 const PROVIDERS = [
-  { name: 'Groq',       key: 'GROQ_API_KEY',       model: 'llama-3.3-70b-versatile' },
-  { name: 'Gemini',     key: 'GEMINI_API_KEY',      model: 'gemini-2.0-flash' },
-  { name: 'SambaNova',  key: 'SAMBANOVA_API_KEY',   model: 'DeepSeek-R1' },
-  { name: 'Cerebras',   key: 'CEREBRAS_API_KEY',    model: 'llama-3.3-70b' },
-  { name: 'OpenRouter', key: 'OPENROUTER_API_KEY',  model: 'deepseek/deepseek-r1:free' }
+  {
+    name: 'Groq',
+    key: 'GROQ_API_KEY',
+    model: 'llama-3.3-70b-versatile'
+  },
+  {
+    name: 'FlatKey',
+    key: 'FLATKEY_API_KEY',
+    model: 'gpt-4o-mini'
+  },
+  {
+    name: 'SambaNova',
+    key: 'SAMBANOVA_API_KEY',
+    model: 'Meta-Llama-3.3-70B-Instruct'
+  },
+  {
+    name: 'NVIDIA NIM',
+    key: 'NVIDIA_API_KEY',
+    model: 'openai/gpt-oss-120b'
+  },
+  {
+    name: 'Kilo Gateway',
+    key: 'KILO_API_KEY',
+    model: 'anthropic/claude-sonnet-4.5'
+  }
 ]
 
 module.exports = function handler(req, res) {
