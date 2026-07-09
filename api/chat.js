@@ -2,13 +2,13 @@ const PROVIDERS = [
   {
     name: 'Groq',
     url: 'https://api.groq.com/openai/v1/chat/completions',
-    key: process.env.Groq_api_key,
+    key: process.env.GROQ_API_KEY,
     model: 'llama-3.3-70b-versatile'
   },
   {
     name: 'Gemini',
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    key: process.env.Gemini_Api_Key,
+    key: process.env.GEMINI_API_KEY,
     model: 'gemini-2.0-flash'
   }
 ]
@@ -27,9 +27,13 @@ module.exports = async function handler(req, res) {
   }
 
   const { messages, ...rest } = req.body
+  const errors = []
 
   for (const provider of PROVIDERS) {
-    if (!provider.key) continue
+    if (!provider.key) {
+      errors.push(`${provider.name}: no API key`)
+      continue
+    }
 
     try {
       const response = await fetch(provider.url, {
@@ -42,7 +46,8 @@ module.exports = async function handler(req, res) {
       })
 
       if (!response.ok) {
-        console.error(`${provider.name} failed:`, response.status)
+        const errText = await response.text()
+        errors.push(`${provider.name}: ${response.status} — ${errText.slice(0, 100)}`)
         continue
       }
 
@@ -51,10 +56,10 @@ module.exports = async function handler(req, res) {
       return res.status(200).json(data)
 
     } catch (err) {
-      console.error(`${provider.name} error:`, err.message)
+      errors.push(`${provider.name}: ${err.message}`)
       continue
     }
   }
 
-  return res.status(503).json({ error: 'All providers failed' })
-                    }
+  return res.status(503).json({ error: 'All providers failed', details: errors })
+}
