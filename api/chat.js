@@ -29,8 +29,7 @@ const PROVIDERS = {
 
   nvidia_z_ai: {
   name: 'NVIDIA NIM (GLM)',
-  url:
-'https://integrate.api.nvidia.com/v1/chat/completions',
+  url:'https://integrate.api.nvidia.com/v1/chat/completions',
   key: process.env.NVIDIA_API_KEY,
   model: 'z-ai/glm-5.2'
  },
