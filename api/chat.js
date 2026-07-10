@@ -1,13 +1,13 @@
 const PROVIDERS = {
   groq: {
-    name: 'Groq',
+    name: 'Groq (Llama)',
     url: 'https://api.groq.com/openai/v1/chat/completions',
     key: process.env.GROQ_API_KEY,
     model: 'llama-3.3-70b-versatile'
   },
 
   flatkey: {
-    name: 'FlatKey',
+    name: 'FlatKey (GPT-4o Mini)',
     url: 'https://console.flatkey.ai/v1/chat/completions',
     key: process.env.FLATKEY_API_KEY,
     model: 'gpt-4o-mini'
@@ -27,25 +27,33 @@ const PROVIDERS = {
     model: 'deepseek-ai/deepseek-v4-pro'
   },
 
- nvidia_z_ai: {
-   name: 'NVIDIA NIM (Z.ai)',
-   url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-   key: process.env.NVIDIA_API_KEY,
-   model: 'z-ai/glm-5.2'
+  nvidia_z_ai: {
+  name: 'NVIDIA NIM (GLM)',
+  url:
+'https://integrate.api.nvidia.com/v1/chat/completions',
+  key: process.env.NVIDIA_API_KEY,
+  model: 'z-ai/glm-5.2'
  },
 
   kilo: {
-    name: 'Kilo Gateway',
+    name: 'Kilo Gateway (Claude)',
     url: 'https://api.kilo.ai/api/gateway/chat/completions',
     key: process.env.KILO_API_KEY,
     model: 'anthropic/claude-haiku-4.5'
   },
 
   openrouter: {
-    name: 'OpenRouter',
+    name: 'OpenRouter (Gemma)',
     url: 'https://openrouter.ai/api/v1/chat/completions',
     key: process.env.OPENROUTER_API_KEY,
     model: 'google/gemma-4-31b-it:free'
+  },
+
+  github_models: {
+    name: 'GitHub Models (GPT-5)',
+    url: 'https://models.github.ai/inference',
+    key: process.env.GITHUB_TOKEN,
+    model: 'openai/gpt-5'
   }
 }
 
@@ -56,7 +64,8 @@ const CASCADE = [
   'nvidia_deepseek',
   'nvidia_z_ai',
   'kilo',
-  'openrouter'
+  'openrouter',
+  'github_models'
 ]
 
 module.exports = async function handler(req, res) {
