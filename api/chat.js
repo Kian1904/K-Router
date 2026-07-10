@@ -49,10 +49,10 @@ const PROVIDERS = {
   },
 
   github_models: {
-    name: 'GitHub Models (GPT-5)',
+    name: 'GitHub Models (Mistral)',
     url : 'https://models.github.ai/inference/chat/completions',
     key: process.env.GITHUB_TOKEN,
-    model: 'openai/gpt-5'
+    model: 'mistral-ai/mistral-small-2503'
   }
 }
 
