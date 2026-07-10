@@ -54,8 +54,8 @@ const CASCADE = [
   'groq',
   'flatkey',
   'nvidia_qwen',
-  'nvidia_z_ai',
   'nvidia_deepseek',
+  'nvidia_z.ai',
   'kilo',
   'openrouter'
 ]
