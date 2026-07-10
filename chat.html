@@ -455,26 +455,32 @@
     fileInjector.click()
   }
 
-  fileInjector.onchange = async (e) => {
+  fileInjector.addEventListener('change', async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      addMsg('error', 'File kegedean, bro! Maksimal 2MB.')
+      fileInjector.value = ''
+      return
+    }
 
     try {
       const content = await file.text()
       const fileName = file.name
-      const fileContent = `\`\`\`\n[File: ${fileName}]\n${content}\n\`\`\``
+      const fileContent = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${fileName}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya dan berikan respon code block yang bersih.`
       
       inputEl.value = fileContent
       inputEl.style.height = '42px'
       inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
       inputEl.focus()
       
-      // Reset file input
       fileInjector.value = ''
     } catch (err) {
       addMsg('error', 'Failed to read file: ' + err.message)
+      fileInjector.value = ''
     }
-  }
+  })
 
   function setSignal(state, label) {
     if (state === 'routing') {
@@ -681,53 +687,10 @@
   inputEl.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   })
-    // ... bagian akhir kode bawaan lo di atas ...
   inputEl.addEventListener('input', () => {
     inputEl.style.height = '42px'
     inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
   })
-
-  // ========================================================
-  // PASTE DI SINI: --- INJECTOR FILE LOGIC ---
-  // ========================================================
-  const fileInjector = document.getElementById('file-injector');
-  const uploadBtn = document.getElementById('upload-btn');
-
-  uploadBtn.onclick = () => fileInjector.click();
-
-  fileInjector.addEventListener('change', async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      addMsg('error', 'File kegedean, bro! Maksimal 2MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    
-    reader.onload = async (e) => {
-      const fileContent = e.target.result;
-
-      const autoPrompt = `Tolong identifikasi dan fix bug di file berikut ini.\n\n` +
-                         `[Nama File]: ${file.name}\n` +
-                         `[Isi File]:\n\`\`\`\n${fileContent}\n\`\`\`\n\n` +
-                         `IMPORTANT: Perbaiki kodenya dan berikan respon code block yang bersih.`;
-
-      inputEl.value = autoPrompt;
-      send(); 
-      
-      event.target.value = '';
-    };
-
-    reader.onerror = () => {
-      addMsg('error', 'Gagal membaca isi file.');
-    };
-
-    reader.readAsText(file);
-  });
-  // ========================================================
-
 </script>
 </body>
 </html>
