@@ -85,7 +85,7 @@
     padding: 0.35rem 0.5rem;
     outline: none;
     cursor: pointer;
-    max-width: 120px;
+    max-width: 140px;
     font-family: inherit;
   }
   button.icon-btn {
@@ -101,17 +101,61 @@
   }
   button.icon-btn:hover { color: var(--text); border-color: #d5d5d3; }
 
-  /* Messages */
-  #messages {
+  /* Comparison Mobile Tabs Container */
+  #compare-tabs {
+    display: none;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: none;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+    font-weight: bold;
+  }
+
+  /* Main Workspace for Messages */
+  #workspace {
+    flex: 1;
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Messages View */
+  .chat-view {
     flex: 1;
     overflow-y: auto;
-    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* View management for layout splitting */
+  #view-b {
+    display: none;
+    border-left: 1px solid var(--border);
+  }
+
+  #messages, #messages-b {
+    flex: 1;
+    overflow-y: auto;
     width: 100%;
+    max-width: 720px;
     margin: 0 auto;
   }
-  #messages::-webkit-scrollbar { width: 4px; }
-  #messages::-webkit-scrollbar-track { background: transparent; }
-  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
   .msg {
     padding: 1rem 1.25rem;
@@ -167,6 +211,7 @@
     padding: 0.75rem 1rem;
     overflow-x: auto;
     margin: 0.5rem 0;
+    position: relative;
   }
   .msg-content pre code {
     background: none;
@@ -210,6 +255,7 @@
     transition: color 0.15s, border-color 0.15s;
   }
   .action-btn:hover { color: var(--text); border-color: #d5d5d3; }
+  .action-btn.dl-btn { color: var(--pale-blue-text); border-color: var(--pale-blue-bg); }
 
   /* search */
   .search-answer { margin-bottom: 0.6rem; color: var(--text); font-size: 0.92rem; }
@@ -301,10 +347,7 @@
   button#send:active { transform: scale(0.98); }
   button#send:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  /* File injector button */
-  #upload-btn {
-    flex-shrink: 0;
-  }
+  #upload-btn { flex-shrink: 0; }
 
   /* setup overlay */
   #setup {
@@ -349,6 +392,18 @@
     font-size: 0.88rem;
   }
   #save-token:hover { background: #333333; }
+
+  /* Responsive styling for desktop vs mobile layout */
+  @media (min-width: 768px) {
+    #compare-tabs { display: none !important; }
+    .chat-view { display: flex !important; width: 50%; }
+  }
+  @media (max-width: 767px) {
+    #view-b.active-tab { display: flex !important; width: 100%; }
+    #view-a.active-tab { display: flex !important; width: 100%; }
+    #view-a:not(.active-tab) { display: none !important; }
+    #view-b:not(.active-tab) { display: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -370,6 +425,7 @@
   <div class="spacer"></div>
   <select id="provider-select">
     <option value="">Auto</option>
+    <option value="compare">⚔️ Compare Mode</option>
     <option value="groq">Groq</option>
     <option value="flatkey">FlatKey</option>
     <option value="nvidia_qwen">NVIDIA · Qwen</option>
@@ -380,13 +436,28 @@
   <button class="icon-btn" id="clear-btn" title="Clear chat">clear</button>
 </header>
 
-<div id="messages">
-  <div id="empty">
-    <div class="mark">/</div>
-    <p>
-      Ketik pesan untuk mulai.<br>
-      Gunakan <code>/search query</code> untuk real-time data.
-    </p>
+<div id="compare-tabs">
+  <button class="tab-btn active" id="tab-a-btn">Model A</button>
+  <button class="tab-btn" id="tab-b-btn">Model B</button>
+</div>
+
+<div id="workspace">
+  <!-- View A (Default & Comparison Side A) -->
+  <div id="view-a" class="chat-view active-tab">
+    <div id="messages">
+      <div id="empty">
+        <div class="mark">/</div>
+        <p>
+          Ketik pesan untuk mulai.<br>
+          Gunakan <code>/search query</code> untuk real-time data.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- View B (Comparison Side B) -->
+  <div id="view-b" class="chat-view">
+    <div id="messages-b"></div>
   </div>
 </div>
 
@@ -411,6 +482,7 @@
   const tokenInput = document.getElementById('token-input')
   const setupError = document.getElementById('setup-error')
   const messagesEl = document.getElementById('messages')
+  const messagesBEl = document.getElementById('messages-b')
   const emptyEl = document.getElementById('empty')
   const inputEl = document.getElementById('input')
   const sendBtn = document.getElementById('send')
@@ -419,8 +491,44 @@
   const providerLabel = document.getElementById('provider-label')
   const fileInjector = document.getElementById('file-injector')
   const uploadBtn = document.getElementById('upload-btn')
+  
+  const compareTabs = document.getElementById('compare-tabs')
+  const viewA = document.getElementById('view-a')
+  const viewb = document.getElementById('view-b')
+  const tabABtn = document.getElementById('tab-a-btn')
+  const tabBBtn = document.getElementById('tab-b-btn')
 
   if (TOKEN) setupEl.classList.add('hidden')
+
+  // UI Layout Handler untuk Compare Mode
+  providerSelect.onchange = () => {
+    if (providerSelect.value === 'compare') {
+      viewb.style.display = 'flex'
+      if (window.innerWidth < 768) {
+        compareTabs.style.display = 'flex'
+      }
+    } else {
+      viewb.style.display = 'none'
+      compareTabs.style.display = 'none'
+      viewA.classList.add('active-tab')
+      viewb.classList.remove('active-tab')
+    }
+  }
+
+  // Handle Switch Tab di Mobile
+  tabABtn.onclick = () => {
+    tabABtn.classList.add('active')
+    tabBBtn.classList.remove('active')
+    viewA.classList.add('active-tab')
+    viewb.classList.remove('active-tab')
+  }
+
+  tabBBtn.onclick = () => {
+    tabBBtn.classList.add('active')
+    tabABtn.classList.remove('active')
+    viewb.classList.add('active-tab')
+    viewA.classList.remove('active-tab')
+  }
 
   document.getElementById('save-token').onclick = async () => {
     const val = tokenInput.value.trim()
@@ -445,39 +553,32 @@
   document.getElementById('clear-btn').onclick = () => {
     history = []
     messagesEl.innerHTML = ''
+    messagesBEl.innerHTML = ''
     messagesEl.appendChild(emptyEl)
     emptyEl.style.display = 'flex'
     setSignal('idle')
   }
 
-  // File injection handler
-  uploadBtn.onclick = () => {
-    fileInjector.click()
-  }
+  uploadBtn.onclick = () => { fileInjector.click() }
 
   fileInjector.addEventListener('change', async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     if (file.size > 2 * 1024 * 1024) {
-      addMsg('error', 'File kegedean, bro! Maksimal 2MB.')
+      addMsg('error', 'File kegedean, bro! Maksimal 2MB.', { target: messagesEl })
       fileInjector.value = ''
       return
     }
-
     try {
       const content = await file.text()
-      const fileName = file.name
-      const fileContent = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${fileName}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya dan berikan respon code block yang bersih.`
-      
+      const fileContent = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${file.name}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya dan berikan respon code block yang bersih.`
       inputEl.value = fileContent
       inputEl.style.height = '42px'
       inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
       inputEl.focus()
-      
       fileInjector.value = ''
     } catch (err) {
-      addMsg('error', 'Failed to read file: ' + err.message)
+      addMsg('error', 'Failed to read file: ' + err.message, { target: messagesEl })
       fileInjector.value = ''
     }
   })
@@ -495,8 +596,54 @@
     }
   }
 
+  // Fungsi Deteksi Otomatis Code Block untuk Download File
+  function attachDownloadButtons(container, rawText) {
+    // Cari semua elemen <pre> yang di-generate oleh marked
+    const preBlocks = container.querySelectorAll('pre');
+    
+    // Gunakan regex untuk mengambil isi kode mentah berdasarkan urutan penemuan block
+    const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+    let match;
+    let idx = 0;
+
+    while ((match = codeBlockRegex.exec(rawText)) !== null) {
+      const lang = match[1] || 'txt';
+      const rawCode = match[2];
+      const targetPre = preBlocks[idx];
+
+      if (targetPre) {
+        // Deteksi ekstensi file berdasarkan bahasa code block
+        let ext = '.' + lang;
+        if (lang === 'js' || lang === 'javascript') ext = '.js';
+        if (lang === 'py' || lang === 'python') ext = '.py';
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'msg-actions';
+
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'action-btn dl-btn';
+        dlBtn.textContent = `💾 download code${ext}`;
+        
+        dlBtn.onclick = () => {
+          const blob = new Blob([rawCode], { type: 'text/plain' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `output_code_${Date.now()}${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+
+        actionsDiv.appendChild(dlBtn);
+        targetPre.parentNode.insertBefore(actionsDiv, targetPre.nextSibling);
+      }
+      idx++;
+    }
+  }
+
   function addMsg(role, content, opts = {}) {
-    emptyEl.style.display = 'none'
+    const targetContainer = opts.target || messagesEl;
+    if (targetContainer === messagesEl) emptyEl.style.display = 'none';
 
     const div = document.createElement('div')
     div.className = 'msg'
@@ -520,7 +667,6 @@
     ts.className = 'msg-ts'
     ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     meta.appendChild(ts)
-
     div.appendChild(meta)
 
     const contentDiv = document.createElement('div')
@@ -565,16 +711,60 @@
       }
       actions.appendChild(copyBtn)
       div.appendChild(actions)
+
+      // Fitur Otomatis Deteksi Code Block untuk Download
+      if (content.includes('```')) {
+        setTimeout(() => attachDownloadButtons(contentDiv, content), 50);
+      }
     }
 
-    messagesEl.appendChild(div)
-    messagesEl.scrollTop = messagesEl.scrollHeight
+    targetContainer.appendChild(div)
+    targetContainer.scrollTop = targetContainer.scrollHeight
     return div
   }
 
+  async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
+    const thinking = addMsg('ai', '', { thinking: true, target: targetContainer })
+    try {
+      const payload = { ...bodyPayload };
+      if (provider) payload.provider = provider;
+
+      const res = await fetch(CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.status === 401) {
+        thinking.remove()
+        addMsg('error', 'Unauthorized — token salah.', { target: targetContainer })
+        return null;
+      }
+      if (!res.ok) {
+        thinking.remove()
+        addMsg('error', 'Error ' + res.status + ' — provider gagal.', { target: targetContainer })
+        return null;
+      }
+
+      const data = await res.json()
+      const reply = data.choices?.[0]?.message?.content || 'No response.'
+      thinking.remove()
+      
+      addMsg('ai', reply, { provider: data._provider, target: targetContainer })
+      if (labelPrefix) {
+        document.getElementById(labelPrefix).textContent = data._provider.toUpperCase();
+      }
+      return reply;
+    } catch (err) {
+      thinking.remove()
+      addMsg('error', 'Request failed: ' + err.message, { target: targetContainer })
+      return null;
+    }
+  }
+
   async function doSearch(query) {
-    addMsg('user', '/search ' + query)
-    const thinking = addMsg('search', '', { thinking: true })
+    addMsg('user', '/search ' + query, { target: messagesEl })
+    const thinking = addMsg('search', '', { thinking: true, target: messagesEl })
     setSignal('routing')
     try {
       const res = await fetch(SEARCH_ENDPOINT, {
@@ -584,8 +774,7 @@
       })
       const data = await res.json()
       thinking.remove()
-      addMsg('search', data)
-      setSignal('idle')
+      addMsg('search', data, { target: messagesEl })
 
       const context = 'Use ONLY the following search results to answer. Do not use prior knowledge.\n\n' +
         'Search results for "' + query + '":\n\n' +
@@ -595,31 +784,16 @@
 
       history.push({ role: 'user', content: context })
       sendBtn.disabled = true
-      setSignal('routing')
-      const aiThinking = addMsg('ai', '', { thinking: true })
-
-      const body = { messages: history }
-      const sel = providerSelect.value
-      if (sel) body.provider = sel
-
-      const aiRes = await fetch(CHAT_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-        body: JSON.stringify(body)
-      })
-      const aiData = await aiRes.json()
-      const reply = aiData.choices?.[0]?.message?.content || 'No response.'
-      aiThinking.remove()
-      addMsg('ai', reply, { provider: aiData._provider })
-      history.push({ role: 'assistant', content: reply })
-      setSignal('provider', aiData._provider)
+      
+      const reply = await fetchModelResponse(providerSelect.value, { messages: history }, messagesEl)
+      if (reply) history.push({ role: 'assistant', content: reply })
 
     } catch (err) {
       thinking.remove()
-      addMsg('error', 'Search failed: ' + err.message)
-      setSignal('idle')
+      addMsg('error', 'Search failed: ' + err.message, { target: messagesEl })
     } finally {
       sendBtn.disabled = false
+      setSignal('idle')
     }
   }
 
@@ -637,48 +811,40 @@
 
     sendBtn.disabled = true
     history.push({ role: 'user', content: text })
-    addMsg('user', text)
-    const thinking = addMsg('ai', '', { thinking: true })
-    setSignal('routing')
 
-    try {
-      const body = { messages: history }
-      const sel = providerSelect.value
-      if (sel) body.provider = sel
+    const mode = providerSelect.value
 
-      const res = await fetch(CHAT_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-        body: JSON.stringify(body)
-      })
+    if (mode === 'compare') {
+      // Jalankan Mode Pembanding: Tembak dua provider andalan sekaligus
+      addMsg('user', text, { target: messagesEl })
+      addMsg('user', text, { target: messagesBEl })
+      
+      tabABtn.textContent = "NVIDIA DeepSeek";
+      tabBBtn.textContent = "FlatKey GPT";
 
-      if (res.status === 401) {
-        thinking.remove()
-        addMsg('error', 'Unauthorized — token salah.')
-        localStorage.removeItem('kr_token')
-        setupEl.classList.remove('hidden')
-        setSignal('idle')
-        return
-      }
-      if (!res.ok) {
-        thinking.remove()
-        addMsg('error', 'Error ' + res.status + ' — semua provider gagal.')
-        setSignal('idle')
-        return
-      }
+      setSignal('routing')
 
-      const data = await res.json()
-      const reply = data.choices?.[0]?.message?.content || 'No response.'
-      thinking.remove()
-      addMsg('ai', reply, { provider: data._provider })
-      history.push({ role: 'assistant', content: reply })
-      setSignal('provider', data._provider)
+      // Request berjalan paralel secara serentak
+      const [replyA, replyB] = await Promise.all([
+        fetchModelResponse('nvidia_deepseek', { messages: history }, messagesEl, 'tab-a-btn'),
+        fetchModelResponse('flatkey', { messages: history }, messagesBEl, 'tab-b-btn')
+      ]);
 
-    } catch (err) {
-      thinking.remove()
-      addMsg('error', 'Request failed: ' + err.message)
+      // Ambil respon salah satu untuk kelanjutan chain history
+      if (replyA) history.push({ role: 'assistant', content: replyA })
       setSignal('idle')
-    } finally {
+      sendBtn.disabled = false
+    } else {
+      // Mode Normal (Single Provider / Auto Router)
+      addMsg('user', text, { target: messagesEl })
+      setSignal('routing')
+      const reply = await fetchModelResponse(mode, { messages: history }, messagesEl)
+      if (reply) {
+        history.push({ role: 'assistant', content: reply })
+        setSignal('provider', mode || 'auto')
+      } else {
+        setSignal('idle')
+      }
       sendBtn.disabled = false
     }
   }
