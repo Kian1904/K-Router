@@ -27,11 +27,11 @@ const PROVIDERS = {
     model: 'deepseek-ai/deepseek-v4-pro'
   },
 
-  nvidia_z_ai: {
-  name: 'NVIDIA NIM (Z.AI)',
-  url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-  key: process.env.NVIDIA_API_KEY,
-  model: 'z-ai/glm-5.2'
+ nvidia_z_ai: {
+   name: 'NVIDIA NIM (Z.AI)',
+   url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+   key: process.env.NVIDIA_API_KEY,
+   model: 'z-ai/glm-5.2'
  },
 
   kilo: {
