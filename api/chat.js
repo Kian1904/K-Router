@@ -50,7 +50,7 @@ const PROVIDERS = {
 
   github_models: {
     name: 'GitHub Models (GPT-5)',
-    url: 'https://models.github.ai/inference',
+    url: 'https://models.inference.ai.azure.com/chat/completions',
     key: process.env.GITHUB_TOKEN,
     model: 'openai/gpt-5'
   }
