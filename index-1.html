@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K's Router — Status</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F1E7;
+    --surface: #FFFDF8;
+    --surface-hover: #FBF6EE;
+    --border: #E7DBC6;
+    --text: #2B2118;
+    --text-muted: #8C7E6C;
+    --accent: #4A3628;
+    --accent-hover: #362819;
+    --ready-bg: #E4E9D6;
+    --ready-text: #4C6636;
+    --down-bg: #F2DFD2;
+    --down-text: #9A5030;
+    --shadow: 0 2px 12px rgba(43, 33, 24, 0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Work Sans', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 800px 500px at 15% -10%, rgba(154, 92, 52, 0.05), transparent),
+      radial-gradient(ellipse 600px 400px at 100% 20%, rgba(76, 102, 54, 0.04), transparent);
+    background-attachment: fixed;
+  }
+
+  main {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+
+  .brand-mark {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(32px, 5vw, 44px);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .meta-block {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  #timestamp { color: var(--text); }
+
+  .summary-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .summary-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .summary-pill strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ready-text);
+  }
+  .dot.down { background: var(--down-text); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+
+  .provider-name {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .badge.ready { background: var(--ready-bg); color: var(--ready-text); }
+  .badge.down { background: var(--down-bg); color: var(--down-text); }
+
+  .provider-model {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    word-break: break-all;
+  }
+
+  .provider-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.7;
+    margin-top: 14px;
+  }
+
+  .footer-row {
+    margin-top: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .btn {
+    font-family: 'Work Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    color: #fff;
+    background: var(--accent);
+    padding: 12px 22px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    display: inline-block;
+  }
+
+  .btn:hover { background: var(--accent-hover); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--surface-hover); color: var(--text); }
+
+  .state-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 40px 0;
+  }
+
+  @media (max-width: 480px) {
+    header { flex-direction: column; align-items: flex-start; }
+    .meta-block { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="brand-mark">status.k-router</div>
+      <h1>K's Router</h1>
+    </div>
+    <div class="meta-block">
+      terakhir dicek<br>
+      <span id="timestamp">—</span>
+    </div>
+  </header>
+
+  <div class="summary-row" id="summaryRow"></div>
+
+  <div class="grid" id="grid">
+    <div class="state-msg">memuat status provider…</div>
+  </div>
+
+  <div class="footer-row">
+    <button class="btn btn-ghost" onclick="loadStatus()">Refresh</button>
+    <a class="btn" href="/chat.html">Buka Chat →</a>
+  </div>
+</main>
+
+<script>
+  async function loadStatus() {
+    const grid = document.getElementById('grid');
+    const summaryRow = document.getElementById('summaryRow');
+    grid.innerHTML = '<div class="state-msg">memuat status provider…</div>';
+
+    try {
+      const res = await fetch('/api/status');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      const providers = data.providers || [];
+      const readyCount = providers.filter(p => p.configured).length;
+
+      summaryRow.innerHTML = `
+        <div class="summary-pill">
+          <span class="dot"></span>
+          <strong>${readyCount}</strong>&nbsp;ready
+        </div>
+        <div class="summary-pill">
+          <span class="dot down"></span>
+          <strong>${providers.length - readyCount}</strong>&nbsp;not configured
+        </div>
+      `;
+
+      grid.innerHTML = '';
+      providers.forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.animationDelay = (i * 60) + 'ms';
+        card.innerHTML = `
+          <div class="card-top">
+            <span class="provider-name">${escapeHtml(p.name)}</span>
+            <span class="badge ${p.configured ? 'ready' : 'down'}">${p.configured ? 'Ready' : 'Not set'}</span>
+          </div>
+          <div class="provider-model">${escapeHtml(p.model)}</div>
+          <div class="provider-id">id: ${escapeHtml(p.id)}</div>
+        `;
+        grid.appendChild(card);
+      });
+
+      const ts = new Date(data.timestamp);
+      document.getElementById('timestamp').textContent = ts.toLocaleString('id-ID', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        day: '2-digit', month: 'short'
+      });
+    } catch (err) {
+      grid.innerHTML = `<div class="state-msg">gagal ambil status: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+
+  loadStatus();
+  setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>
