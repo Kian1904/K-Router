@@ -87,6 +87,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+      console.log(`[${p.name}] Attempting request with model: ${p.model}`)
       const response = await fetch(p.url, {
         method: 'POST',
         headers: {
@@ -96,6 +97,8 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({ model: p.model, messages, ...rest })
       })
 
+      console.log(`[${p.name}] Response status: ${response.status}`)
+
       if (!response.ok) {
         const errorBody = await response.text()
         console.error('[' + p.name + '] ' + response.status)
@@ -104,11 +107,12 @@ module.exports = async function handler(req, res) {
       }
 
       const data = await response.json()
+      console.log(`[${p.name}] Success! Response keys:`, Object.keys(data))
       data._provider = p.name
       return res.status(200).json(data)
 
     } catch (err) {
-      console.error('[' + p.name + ']', err)
+      console.error('[' + p.name + ']', err.message)
     }
   }
 
