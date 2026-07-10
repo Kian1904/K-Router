@@ -571,7 +571,7 @@
     }
     try {
       const content = await file.text()
-      const fileContent = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${file.name}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya dan berikan respon code block yang bersih.`
+      const fileContent = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${file.name}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya dan berikan respon yang bisa saya paste langsung ke file (kode yang sudah diperbaiki, dan penjelasan singkat).`
       inputEl.value = fileContent
       inputEl.style.height = '42px'
       inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
