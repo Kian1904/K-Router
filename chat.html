@@ -301,6 +301,11 @@
   button#send:active { transform: scale(0.98); }
   button#send:disabled { opacity: 0.35; cursor: not-allowed; }
 
+  /* File injector button */
+  #upload-btn {
+    flex-shrink: 0;
+  }
+
   /* setup overlay */
   #setup {
     position: fixed;
@@ -386,6 +391,9 @@
 </div>
 
 <footer>
+  <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
+  <button class="icon-btn" id="upload-btn" type="button" title="Inject file ke prompt">📎</button>
+  
   <textarea id="input" placeholder="Pesan... atau /search query" rows="1"></textarea>
   <button id="send">Kirim</button>
 </footer>
@@ -409,6 +417,8 @@
   const providerSelect = document.getElementById('provider-select')
   const signalEl = document.getElementById('signal')
   const providerLabel = document.getElementById('provider-label')
+  const fileInjector = document.getElementById('file-injector')
+  const uploadBtn = document.getElementById('upload-btn')
 
   if (TOKEN) setupEl.classList.add('hidden')
 
@@ -438,6 +448,32 @@
     messagesEl.appendChild(emptyEl)
     emptyEl.style.display = 'flex'
     setSignal('idle')
+  }
+
+  // File injection handler
+  uploadBtn.onclick = () => {
+    fileInjector.click()
+  }
+
+  fileInjector.onchange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const content = await file.text()
+      const fileName = file.name
+      const fileContent = `\`\`\`\n[File: ${fileName}]\n${content}\n\`\`\``
+      
+      inputEl.value = fileContent
+      inputEl.style.height = '42px'
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
+      inputEl.focus()
+      
+      // Reset file input
+      fileInjector.value = ''
+    } catch (err) {
+      addMsg('error', 'Failed to read file: ' + err.message)
+    }
   }
 
   function setSignal(state, label) {
@@ -651,4 +687,4 @@
   })
 </script>
 </body>
-  </html>
+</html>
