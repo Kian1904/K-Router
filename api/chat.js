@@ -27,7 +27,7 @@ const PROVIDERS = {
     model: 'deepseek-ai/deepseek-v4-pro'
   },
 
-  nvidia_z.ai: {
+  nvidia_z-ai: {
   url:
 'https://integrate.api.nvidia.com/v1/chat/completions',
   key: process.env.NVIDIA_API_KEY,
