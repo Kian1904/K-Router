@@ -47,11 +47,11 @@ const PROVIDERS = {
     type: 'openai'
   },
 
-  openrouter: {
-    name: 'OpenRouter (Gemma)',
-    url: 'https://openrouter.ai/api/v1/chat/completions',
-    key: process.env.OPENROUTER_API_KEY,
-    model: 'google/gemma-4-31b-it:free',
+  cerebras: {
+    name: 'Cerebras (Gemma)',
+    url: 'https://api.cerebras.ai/v1/chat/completions',
+    key: process.env.CEREBRAS_API_TOKEN,
+    model: 'google/gemma-4-31B-it',
     type: 'openai'
   },
 
@@ -79,7 +79,7 @@ const CASCADE = [
   'nvidia_deepseek',
   'nvidia_z_ai',
   'kilo',
-  'openrouter',
+  'cerebras',
   'github_mistral',
   'google_gemini'
 ]
