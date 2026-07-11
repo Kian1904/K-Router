@@ -9,7 +9,7 @@ const PROVIDERS = {
   openrouter_gpt: {
     name: 'OpenRouter (GPT)',
     url: 'https://openrouter.ai/api/v1/chat/completions',
-    key: PROCESS.ENV.OPENROUTER_API_KEY,
+    key: process.env.OPENROUTER_API_KEY,
     model: 'openai/gpt-oss-120b:free'
   },
 
