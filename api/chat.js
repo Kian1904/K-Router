@@ -113,32 +113,26 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const auth = req.headers.authorization
   if (auth !== 'Bearer ' + process.env.BEARER_TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  // 1. Ambil data req.body secara rapi dari awal tanpa bentrok variabel
-  const { messages = [], provider, ...rest } = req.body
+  // 1. Ambil data req.body secara rapi. Kita pisah 'stream' untuk handling keamanan.
+  const { messages = [], provider, stream, ...rest } = req.body
   let selected = provider
 
-  // Ambil pesan terakhir dari user untuk dianalisis
   const lastUserMessage = messages[messages.length - 1]?.content || ""
 
   // 2. Logika Pintar (Auto Smart Router)
   if (selected === 'auto_router') {
-    // Deteksi jika user melampirkan file kode (.js, .html, .css, atau ada blok kode ```)
     const isCodingTask = lastUserMessage.includes('.js') || 
                          lastUserMessage.includes('.html') || 
                          lastUserMessage.includes('```javascript') ||
                          /\b(function|const|let|import|export|class)\b/i.test(lastUserMessage);
                          
-    // Deteksi jika tugasnya nulis/dokumen/outline/cerita
     const isWritingTask = /\b(outline|dokumen|cerita|artikel|naskah|resume|susun)\b/i.test(lastUserMessage);
 
     if (isCodingTask) {
@@ -146,14 +140,13 @@ module.exports = async function handler(req, res) {
       selected = 'nvidia_deepseek'; 
     } else if (isWritingTask) {
       console.log("[Smart Router] Mengarahkan ke Spesialis Struktur Dokumen: Google Gemini");
-      selected = 'google_gemini'; // Dialihkan ke Gemini untuk dokumen karena Nemotron belum lo daftarkan di PROVIDERS atas.
+      selected = 'google_gemini';
     } else {
       console.log("[Smart Router] Mengarahkan ke Tugas Umum: Groq Llama");
       selected = 'groq'; 
     }
   }
   
-  // Tentukan target provider
   const targets = selected && PROVIDERS[selected] ? [selected] : CASCADE
 
   for (const id of targets) {
@@ -169,14 +162,18 @@ module.exports = async function handler(req, res) {
       let fetchBody, fetchHeaders, fetchUrl
       
       if (p.type === 'google') {
-        // Google Gemini format
+        // FIX: Proteksi payload Gemini agar parameter asing tidak merusak request
         fetchUrl = p.url + '?key=' + p.key
-        fetchHeaders = {
-          'Content-Type': 'application/json'
-        }
+        fetchHeaders = { 'Content-Type': 'application/json' }
+        
+        // Mapping parameter OpenAI standar ke format generationConfig Gemini jika ada
+        const generationConfig = {};
+        if (rest.temperature !== undefined) generationConfig.temperature = rest.temperature;
+        if (rest.max_tokens !== undefined) generationConfig.maxOutputTokens = rest.max_tokens;
+
         fetchBody = {
           contents: convertToGoogleFormat(messages),
-          ...rest
+          ...(Object.keys(generationConfig).length > 0 ? { generationConfig } : {})
         }
       } else {
         // OpenAI format (default)
@@ -185,7 +182,13 @@ module.exports = async function handler(req, res) {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + p.key
         }
-        fetchBody = { model: p.model, messages, ...rest }
+        // Pastikan stream dimatikan jika arsitektur lo belum siap handle chunk stream
+        fetchBody = { 
+          model: p.model, 
+          messages, 
+          stream: false, // Set false dulu biar gak crash di response.json()
+          ...rest 
+        }
       }
 
       const response = await fetch(fetchUrl, {
@@ -205,7 +208,6 @@ module.exports = async function handler(req, res) {
 
       let data = await response.json()
       
-      // Convert Google response to OpenAI format if needed
       if (p.type === 'google') {
         data = convertGoogleResponse(data)
       }
