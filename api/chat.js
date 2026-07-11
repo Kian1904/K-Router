@@ -58,7 +58,7 @@ const PROVIDERS = {
 
 const CASCADE = [
   'groq',
-  'hugging_face,
+  'hugging_face',
   'nvidia_qwen',
   'nvidia_deepseek',
   'nvidia_z_ai',
