@@ -1,6 +1,6 @@
 const PROVIDERS = [
   { id: 'groq', name: 'Groq (Llama)', key: 'GROQ_API_KEY', model: 'llama-3.3-70b-versatile' },
-  { id: 'flatkey', name: 'FlatKey (GPT-4o Mini)', key: 'FLATKEY_API_KEY', model: 'gpt-4o-mini' },
+  { id: 'groq_gpt', name: 'Groq (GPT)', key: 'GROQ_API_KEY', model: 'openai/gpt-oss-120b' },
   { id: 'nvidia_qwen', name: 'NVIDIA NIM (Qwen)', key: 'NVIDIA_API_KEY', model: 'qwen/qwen3.5-397b-a17b' },
   { id: 'nvidia_deepseek', name: 'NVIDIA NIM (DeepSeek)', key: 'NVIDIA_API_KEY', model: 'deepseek-ai/deepseek-v4-pro' },
   { id: 'nvidia_z_ai', name: 'NVIDIA NIM (GLM)', key: 'NVIDIA_API_KEY', model: 'z-ai/glm-5.2' },
