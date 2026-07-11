@@ -6,10 +6,10 @@ const PROVIDERS = {
     model: 'llama-3.3-70b-versatile'
   },
 
-  groq_gpt: {
-    name: 'Groq (Gpt)',
-    url: 'https://api.groq.com/openai/v1/chat/completions',
-    key: process.env.GROQ_API_KEY,
+  hugging_face: {
+    name: 'Hugging Face (GPT)',
+    url: 'https://api-inference.huggingface.co/models/openai/gpt-oss-120b:cerebras',
+    key: process.env.HF_TOKEN,
     model: 'openai/gpt-oss-120b' 
   },
 
