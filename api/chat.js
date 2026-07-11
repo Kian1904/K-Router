@@ -6,11 +6,11 @@ const PROVIDERS = {
     model: 'llama-3.3-70b-versatile'
   },
 
-  hugging_face: {
-    name: 'Hugging Face (GPT)',
-    url: 'https://api-inference.huggingface.co/models/openai/gpt-oss-120b',
-    key: process.env.HF_TOKEN,
-    model: 'openai/gpt-oss-120b'
+  openrouter_gpt: {
+    name: 'OpenRouter (GPT)',
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: PROCESS.ENV.OPENROUTER_API_KEY,
+    model: 'openai/gpt-oss-120b:free'
   },
 
   nvidia_qwen: {
@@ -41,7 +41,7 @@ const PROVIDERS = {
     model: 'anthropic/claude-haiku-4.5'
   },
 
-  openrouter: {
+  openrouter_gemma: {
     name: 'OpenRouter (Gemma)',
     url: 'https://openrouter.ai/api/v1/chat/completions',
     key: process.env.OPENROUTER_API_KEY,
@@ -58,12 +58,12 @@ const PROVIDERS = {
 
 const CASCADE = [
   'groq',
-  'hugging_face',
+  'openrouter_gpt,
   'nvidia_qwen',
   'nvidia_deepseek',
   'nvidia_z_ai',
   'kilo',
-  'openrouter',
+  'openrouter_gemma',
   'github_models'
 ]
 
