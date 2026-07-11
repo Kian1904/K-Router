@@ -58,7 +58,7 @@ const PROVIDERS = {
 
 const CASCADE = [
   'groq',
-  'openrouter_gpt,
+  'openrouter_gpt',
   'nvidia_qwen',
   'nvidia_deepseek',
   'nvidia_z_ai',
