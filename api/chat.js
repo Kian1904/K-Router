@@ -6,11 +6,11 @@ const PROVIDERS = {
     model: 'llama-3.3-70b-versatile'
   },
 
-  flatkey: {
-    name: 'FlatKey (GPT-4o Mini)',
-    url: 'https://console.flatkey.ai/v1/chat/completions',
-    key: process.env.FLATKEY_API_KEY,
-    model: 'gpt-4o-mini'
+  groq_gpt: {
+    name: 'Groq (Gpt)',
+    url: 'https://api.groq.com/openai/v1/chat/completions',
+    key: process.env.GROQ_API_KEY,
+    model: 'openai/gpt-oss-120b' 
   },
 
   nvidia_qwen: {
@@ -58,7 +58,7 @@ const PROVIDERS = {
 
 const CASCADE = [
   'groq',
-  'flatkey',
+  'groq_gpt',
   'nvidia_qwen',
   'nvidia_deepseek',
   'nvidia_z_ai',
