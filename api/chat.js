@@ -32,12 +32,12 @@ const PROVIDERS = {
   },
 
   nvidia_z_ai: {
-  name: 'NVIDIA NIM (GLM)',
-  url:'https://integrate.api.nvidia.com/v1/chat/completions',
-  key: process.env.NVIDIA_API_KEY,
-  model: 'z-ai/glm-5.2',
-  type: 'openai'
- },
+    name: 'NVIDIA NIM (GLM)',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: process.env.NVIDIA_API_KEY,
+    model: 'z-ai/glm-5.2',
+    type: 'openai'
+  },
 
   kilo: {
     name: 'Kilo Gateway (Claude)',
@@ -57,7 +57,7 @@ const PROVIDERS = {
 
   github_mistral: {
     name: 'GitHub (Mistral)',
-    url : 'https://models.github.ai/inference/chat/completions',
+    url: 'https://models.github.ai/inference/chat/completions',
     key: process.env.GITHUB_TOKEN,
     model: 'mistral-ai/mistral-small-2503',
     type: 'openai'
@@ -123,38 +123,37 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  // 1. Tangkap input dari frontend
- let selected = req.body.provider; // Pilihan manual user dari dropdown
- const messages = req.body.messages || [];
+  // 1. Ambil data req.body secara rapi dari awal tanpa bentrok variabel
+  const { messages = [], provider, ...rest } = req.body
+  let selected = provider
 
- // Ambil pesan terakhir dari user untuk dianalisis
- const lastUserMessage = messages[messages.length - 1]?.content || "";
+  // Ambil pesan terakhir dari user untuk dianalisis
+  const lastUserMessage = messages[messages.length - 1]?.content || ""
 
- // 2. JIKA USER MEMILIH "AUTO", BARULAH LOGIKA PINTAR JALAN
- if (selected === 'auto_router') {
-  
-  // Deteksi jika user melampirkan file kode (.js, .html, .css, atau ada blok kode ```)
-  const isCodingTask = lastUserMessage.includes('.js') || 
-                       lastUserMessage.includes('.html') || 
-                       lastUserMessage.includes('```javascript') ||
-                       /\b(function|const|let|import|export|class)\b/i.test(lastUserMessage);
-                       
-  // Deteksi jika tugasnya nulis/dokumen/outline/cerita
-  const isWritingTask = /\b(outline|dokumen|cerita|artikel|naskah|resume|susun)\b/i.test(lastUserMessage);
+  // 2. Logika Pintar (Auto Smart Router)
+  if (selected === 'auto_router') {
+    // Deteksi jika user melampirkan file kode (.js, .html, .css, atau ada blok kode ```)
+    const isCodingTask = lastUserMessage.includes('.js') || 
+                         lastUserMessage.includes('.html') || 
+                         lastUserMessage.includes('```javascript') ||
+                         /\b(function|const|let|import|export|class)\b/i.test(lastUserMessage);
+                         
+    // Deteksi jika tugasnya nulis/dokumen/outline/cerita
+    const isWritingTask = /\b(outline|dokumen|cerita|artikel|naskah|resume|susun)\b/i.test(lastUserMessage);
 
-  if (isCodingTask) {
-    console.log("[Smart Router] Mengarahkan ke Spesialis Coding: NVIDIA NIM DeepSeek/Qwen");
-    selected = 'nvidia_deepseek'; // Otomatis lempar ke DeepSeek
-  } else if (isWritingTask) {
-    console.log("[Smart Router] Mengarahkan ke Spesialis Struktur Dokumen: NVIDIA NIM Nemotron");
-    selected = 'nvidia_nemotron'; // Otomatis lempar ke Nemotron
-  } else {
-    console.log("[Smart Router] Mengarahkan ke Tugas Umum: Groq Llama");
-    selected = 'groq'; // Sisanya lempar ke Groq yang super cepat
+    if (isCodingTask) {
+      console.log("[Smart Router] Mengarahkan ke Spesialis Coding: NVIDIA NIM DeepSeek");
+      selected = 'nvidia_deepseek'; 
+    } else if (isWritingTask) {
+      console.log("[Smart Router] Mengarahkan ke Spesialis Struktur Dokumen: Google Gemini");
+      selected = 'google_gemini'; // Dialihkan ke Gemini untuk dokumen karena Nemotron belum lo daftarkan di PROVIDERS atas.
+    } else {
+      console.log("[Smart Router] Mengarahkan ke Tugas Umum: Groq Llama");
+      selected = 'groq'; 
+    }
   }
-}
   
-  const { messages, provider: selected, ...rest } = req.body
+  // Tentukan target provider
   const targets = selected && PROVIDERS[selected] ? [selected] : CASCADE
 
   for (const id of targets) {
@@ -221,4 +220,4 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(503).json({ error: 'All providers failed' })
-        }
+}
