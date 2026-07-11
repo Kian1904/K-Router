@@ -10,7 +10,7 @@ const PROVIDERS = {
     name: 'Hugging Face (GPT)',
     url: 'https://api-inference.huggingface.co/models/openai/gpt-oss-120b:cerebras',
     key: process.env.HF_TOKEN,
-    model: 'openai/gpt-oss-120b' 
+    model: 'openai/gpt-oss-120b:cerebras' 
   },
 
   nvidia_qwen: {
@@ -58,7 +58,7 @@ const PROVIDERS = {
 
 const CASCADE = [
   'groq',
-  'groq_gpt',
+  'hugging_face,
   'nvidia_qwen',
   'nvidia_deepseek',
   'nvidia_z_ai',
