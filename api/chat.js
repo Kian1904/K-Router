@@ -50,7 +50,7 @@ const PROVIDERS = {
   cerebras: {
     name: 'Cerebras (Gemma)',
     url: 'https://api.cerebras.ai/v1/chat/completions',
-    key: process.env.CEREBRAS_API_TOKEN,
+    key: process.env.CEREBRAS_API_KEY,
     model: 'google/gemma-4-31B-it',
     type: 'openai'
   },
