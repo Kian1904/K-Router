@@ -55,7 +55,7 @@ const PROVIDERS = {
     type: 'openai'
   },
 
-  github_mistral: {
+  github_models: {
     name: 'GitHub (Mistral)',
     url: 'https://models.github.ai/inference/chat/completions',
     key: process.env.GITHUB_TOKEN,
