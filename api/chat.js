@@ -8,9 +8,9 @@ const PROVIDERS = {
 
   hugging_face: {
     name: 'Hugging Face (GPT)',
-    url: 'https://api-inference.huggingface.co/models/openai/gpt-oss-120b:cerebras',
+    url: 'https://api-inference.huggingface.co/models/openai/gpt-oss-120b',
     key: process.env.HF_TOKEN,
-    model: 'openai/gpt-oss-120b:cerebras' 
+    model: 'openai/gpt-oss-120b'
   },
 
   nvidia_qwen: {
