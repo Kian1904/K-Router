@@ -6,11 +6,11 @@ const PROVIDERS = {
     model: 'llama-3.3-70b-versatile'
   },
 
-  openrouter_gpt: {
-    name: 'OpenRouter (GPT)',
-    url: 'https://openrouter.ai/api/v1/chat/completions',
-    key: process.env.OPENROUTER_API_KEY,
-    model: 'openai/gpt-oss-120b:free'
+  github_gpt: {
+    name: 'GitHub (GPT)',
+    url: 'https://models.github.ai/inference/chat/completions',
+    key: process.env.GITHUB_TOKEN,
+    model: 'openai/gpt-4o-mini'
   },
 
   nvidia_qwen: {
@@ -48,8 +48,8 @@ const PROVIDERS = {
     model: 'google/gemma-4-31b-it:free'
   },
 
-  github_models: {
-    name: 'GitHub Models (Mistral)',
+  github_mistral: {
+    name: 'GitHub (Mistral)',
     url : 'https://models.github.ai/inference/chat/completions',
     key: process.env.GITHUB_TOKEN,
     model: 'mistral-ai/mistral-small-2503'
@@ -58,13 +58,13 @@ const PROVIDERS = {
 
 const CASCADE = [
   'groq',
-  'openrouter_gpt',
+  'github_gpt',
   'nvidia_qwen',
   'nvidia_deepseek',
   'nvidia_z_ai',
   'kilo',
   'openrouter_gemma',
-  'github_models'
+  'github_mistral'
 ]
 
 module.exports = async function handler(req, res) {
