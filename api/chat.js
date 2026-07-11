@@ -123,6 +123,37 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
+  // 1. Tangkap input dari frontend
+ let selected = req.body.provider; // Pilihan manual user dari dropdown
+ const messages = req.body.messages || [];
+
+ // Ambil pesan terakhir dari user untuk dianalisis
+ const lastUserMessage = messages[messages.length - 1]?.content || "";
+
+ // 2. JIKA USER MEMILIH "AUTO", BARULAH LOGIKA PINTAR JALAN
+ if (selected === 'auto_router') {
+  
+  // Deteksi jika user melampirkan file kode (.js, .html, .css, atau ada blok kode ```)
+  const isCodingTask = lastUserMessage.includes('.js') || 
+                       lastUserMessage.includes('.html') || 
+                       lastUserMessage.includes('```javascript') ||
+                       /\b(function|const|let|import|export|class)\b/i.test(lastUserMessage);
+                       
+  // Deteksi jika tugasnya nulis/dokumen/outline/cerita
+  const isWritingTask = /\b(outline|dokumen|cerita|artikel|naskah|resume|susun)\b/i.test(lastUserMessage);
+
+  if (isCodingTask) {
+    console.log("[Smart Router] Mengarahkan ke Spesialis Coding: NVIDIA NIM DeepSeek/Qwen");
+    selected = 'nvidia_deepseek'; // Otomatis lempar ke DeepSeek
+  } else if (isWritingTask) {
+    console.log("[Smart Router] Mengarahkan ke Spesialis Struktur Dokumen: NVIDIA NIM Nemotron");
+    selected = 'nvidia_nemotron'; // Otomatis lempar ke Nemotron
+  } else {
+    console.log("[Smart Router] Mengarahkan ke Tugas Umum: Groq Llama");
+    selected = 'groq'; // Sisanya lempar ke Groq yang super cepat
+  }
+}
+  
   const { messages, provider: selected, ...rest } = req.body
   const targets = selected && PROVIDERS[selected] ? [selected] : CASCADE
 
