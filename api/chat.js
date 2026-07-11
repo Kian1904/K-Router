@@ -47,7 +47,7 @@ const PROVIDERS = {
     type: 'openai'
   },
 
-  openrouter_gemma: {
+  openrouter: {
     name: 'OpenRouter (Gemma)',
     url: 'https://openrouter.ai/api/v1/chat/completions',
     key: process.env.OPENROUTER_API_KEY,
@@ -79,7 +79,7 @@ const CASCADE = [
   'nvidia_deepseek',
   'nvidia_z_ai',
   'kilo',
-  'openrouter_gemma',
+  'openrouter',
   'github_mistral',
   'google_gemini'
 ]
