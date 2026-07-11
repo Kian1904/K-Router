@@ -465,6 +465,7 @@
 </div>
 
 <footer>
+ 
   <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
   <button class="icon-btn" id="upload-btn" type="button" title="Inject file ke prompt">📎</button>
   
@@ -472,6 +473,14 @@
   <button id="send">Kirim</button>
 </footer>
 
+<select id="provider-select">
+  <option value="auto_router">✨ Auto Smart Router (Rekomendasi)</option>
+  <option value="groq">Groq (Llama)</option>
+  <option value="nvidia_deepseek">NVIDIA (DeepSeek)</option>
+  <option value="nvidia_nemotron">NVIDIA (Nemotron)</option>
+  </select>
+
+  
 <script>
   const CHAT_ENDPOINT = '/api/chat'
   const SEARCH_ENDPOINT = '/api/search'
