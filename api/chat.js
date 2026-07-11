@@ -3,56 +3,72 @@ const PROVIDERS = {
     name: 'Groq (Llama)',
     url: 'https://api.groq.com/openai/v1/chat/completions',
     key: process.env.GROQ_API_KEY,
-    model: 'llama-3.3-70b-versatile'
+    model: 'llama-3.3-70b-versatile',
+    type: 'openai'
   },
 
   github_gpt: {
     name: 'GitHub (GPT)',
     url: 'https://models.github.ai/inference/chat/completions',
     key: process.env.GITHUB_TOKEN,
-    model: 'openai/gpt-4o-mini'
+    model: 'openai/gpt-4o-mini',
+    type: 'openai'
   },
 
   nvidia_qwen: {
     name: 'NVIDIA NIM (Qwen)',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
     key: process.env.NVIDIA_API_KEY,
-    model: 'qwen/qwen3.5-397b-a17b'
+    model: 'qwen/qwen3.5-397b-a17b',
+    type: 'openai'
   },
 
   nvidia_deepseek: {
     name: 'NVIDIA NIM (DeepSeek)',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
     key: process.env.NVIDIA_API_KEY,
-    model: 'deepseek-ai/deepseek-v4-pro'
+    model: 'deepseek-ai/deepseek-v4-pro',
+    type: 'openai'
   },
 
   nvidia_z_ai: {
   name: 'NVIDIA NIM (GLM)',
   url:'https://integrate.api.nvidia.com/v1/chat/completions',
   key: process.env.NVIDIA_API_KEY,
-  model: 'z-ai/glm-5.2'
+  model: 'z-ai/glm-5.2',
+  type: 'openai'
  },
 
   kilo: {
     name: 'Kilo Gateway (Claude)',
     url: 'https://api.kilo.ai/api/gateway/chat/completions',
     key: process.env.KILO_API_KEY,
-    model: 'anthropic/claude-haiku-4.5'
+    model: 'anthropic/claude-haiku-4.5',
+    type: 'openai'
   },
 
   openrouter_gemma: {
     name: 'OpenRouter (Gemma)',
     url: 'https://openrouter.ai/api/v1/chat/completions',
     key: process.env.OPENROUTER_API_KEY,
-    model: 'google/gemma-4-31b-it:free'
+    model: 'google/gemma-4-31b-it:free',
+    type: 'openai'
   },
 
   github_mistral: {
     name: 'GitHub (Mistral)',
     url : 'https://models.github.ai/inference/chat/completions',
     key: process.env.GITHUB_TOKEN,
-    model: 'mistral-ai/mistral-small-2503'
+    model: 'mistral-ai/mistral-small-2503',
+    type: 'openai'
+  },
+
+  google_gemini: {
+    name: 'Google · Gemini',
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+    key: process.env.GEMINI_API_KEY,
+    model: 'gemini-2.5-flash',
+    type: 'google'
   }
 }
 
@@ -64,8 +80,32 @@ const CASCADE = [
   'nvidia_z_ai',
   'kilo',
   'openrouter_gemma',
-  'github_mistral'
+  'github_mistral',
+  'google_gemini'
 ]
+
+// Helper: Convert OpenAI format to Google format
+function convertToGoogleFormat(messages) {
+  return messages.map(msg => ({
+    role: msg.role === 'user' ? 'user' : 'model',
+    parts: [{ text: msg.content }]
+  }))
+}
+
+// Helper: Convert Google response to OpenAI format
+function convertGoogleResponse(googleResponse) {
+  const aiResponse = googleResponse.candidates?.[0]?.content?.parts?.[0]?.text || 'No response'
+  return {
+    choices: [
+      {
+        message: {
+          role: 'assistant',
+          content: aiResponse
+        }
+      }
+    ]
+  }
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -95,13 +135,33 @@ module.exports = async function handler(req, res) {
 
     try {
       console.log(`[${p.name}] Attempting request with model: ${p.model}`)
-      const response = await fetch(p.url, {
-        method: 'POST',
-        headers: {
+      
+      let fetchBody, fetchHeaders, fetchUrl
+      
+      if (p.type === 'google') {
+        // Google Gemini format
+        fetchUrl = p.url + '?key=' + p.key
+        fetchHeaders = {
+          'Content-Type': 'application/json'
+        }
+        fetchBody = {
+          contents: convertToGoogleFormat(messages),
+          ...rest
+        }
+      } else {
+        // OpenAI format (default)
+        fetchUrl = p.url
+        fetchHeaders = {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + p.key
-        },
-        body: JSON.stringify({ model: p.model, messages, ...rest })
+        }
+        fetchBody = { model: p.model, messages, ...rest }
+      }
+
+      const response = await fetch(fetchUrl, {
+        method: 'POST',
+        headers: fetchHeaders,
+        body: JSON.stringify(fetchBody)
       })
 
       console.log(`[${p.name}] Response status: ${response.status}`)
@@ -113,7 +173,13 @@ module.exports = async function handler(req, res) {
         continue
       }
 
-      const data = await response.json()
+      let data = await response.json()
+      
+      // Convert Google response to OpenAI format if needed
+      if (p.type === 'google') {
+        data = convertGoogleResponse(data)
+      }
+      
       console.log(`[${p.name}] Success! Response keys:`, Object.keys(data))
       data._provider = p.name
       return res.status(200).json(data)
