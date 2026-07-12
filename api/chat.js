@@ -1,21 +1,9 @@
-// 1. IMPORT LIBRARY-NYA DI BARIS PALING ATAS (Ini yang dibilang hilang sama AI Supabase)
 const { createClient } = require('@supabase/supabase-js');
 
-// 2. AMBIL ENV VARIABLES
+// Inisialisasi menggunakan SERVICE KEY untuk bypass RLS secara aman di server-side
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-
-// 3. INISIALISASI CLIENT SECARA AMAN
-let supabase = null;
-if (supabaseUrl && supabaseKey) {
-  try {
-    supabase = createClient(supabaseUrl, supabaseKey);
-  } catch (e) {
-    console.warn('[Supabase Setup] Gagal membuat client:', e.message);
-  }
-}
-
-// ... Sisa kode PROVIDERS dan fungsi handler ke bawah tetap sama seperti file utuh yang gua kasih sebelumnya ...
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const PROVIDERS = {
   groq: {
@@ -102,28 +90,23 @@ const EFFORT_MAP = {
   high:   { temperature: 1.0, max_tokens: 4096 }
 };
 
-// Fungsi Logger Tunggal - Bersih & Safe
 async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut, latencyMs, success, errorMsg }) {
-  if (!supabase) return; // Skip otomatis kalau supabase client belum siap
-  
   try {
     const { error } = await supabase.from('usage_logs').insert([{
-      provider: provider || 'unknown',
-      model: model || 'unknown',
-      effort: effort || 'medium',
-      thinking: Boolean(thinking),
-      tokens_in: tokensIn ? parseInt(tokensIn) : null,
-      tokens_out: tokensOut ? parseInt(tokensOut) : null,
-      latency_ms: latencyMs ? parseInt(latencyMs) : null,
-      success: success === undefined ? true : Boolean(success),
-      error_msg: errorMsg || null
+      provider,
+      model,
+      effort,
+      thinking,
+      tokens_in: tokensIn,
+      tokens_out: tokensOut,
+      latency_ms: latencyMs,
+      success,
+      error_msg: errorMsg
     }]);
-
-    if (error) {
-      console.error('Supabase Database Error:', error.message, error.details);
-    }
+    
+    if (error) console.error('Supabase Error:', error.message);
   } catch (err) {
-    console.error('Supabase log exception:', err.message);
+    console.error('Log Failed:', err.message);
   }
 }
 
