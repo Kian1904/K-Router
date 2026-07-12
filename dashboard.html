@@ -313,7 +313,7 @@ tr:hover td{background:#fafafa}
     if (!val) return
     // Test token dengan hit /api/logs
     try {
-      const res = await fetch('/api/logs?range=24h&limit=1', {
+      const res = await fetch('/api/log?range=24h&limit=1', {
         headers: { Authorization: 'Bearer ' + val }
       })
       if (res.status === 401) {
@@ -357,13 +357,17 @@ tr:hover td{background:#fafafa}
   }
 
   function effortBadge(effort) {
-    const cls = { low: 'badge-low', medium: 'badge-medium', high: 'badge-high' }
-    return `<span class="badge ${cls[effort] || 'badge-medium'}">${effort || 'medium'}</span>`
+  if (!effort) return '<span class="badge badge-medium">medium</span>';
+  
+  const cleanEffort = effort.toLowerCase().trim();
+  const cls = { low: 'badge-low', medium: 'badge-medium', high: 'badge-high' };
+  
+  return `<span class="badge ${cls[cleanEffort] || 'badge-medium'}">${cleanEffort}</span>`;
   }
 
   async function loadDashboard() {
     try {
-      const res = await fetch(`/api/logs?range=${currentRange}&limit=30`, {
+      const res = await fetch(`/api/log?range=${currentRange}&limit=30`, {
         headers: { Authorization: 'Bearer ' + token }
       })
 
