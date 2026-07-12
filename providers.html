@@ -244,7 +244,7 @@ body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--text);f
 
       const [statusRes, logsRes] = await Promise.all([
         fetch('/api/status', { headers }),
-        fetch('/api/logs?range=7d&limit=1000', { headers })
+        fetch('/api/log?range=7d&limit=1000', { headers })
       ])
 
       if (statusRes.status === 401 || logsRes.status === 401) {
