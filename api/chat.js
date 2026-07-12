@@ -44,7 +44,7 @@ const PROVIDERS = {
     url: 'https://api.kilo.ai/api/gateway/chat/completions',
     key: process.env.KILO_API_KEY,
     model: 'anthropic/claude-haiku-4.5',
-    type: 'openai'
+    type: 'Anthropic 
   },
 
   cerebras: {
