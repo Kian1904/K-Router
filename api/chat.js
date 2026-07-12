@@ -1,9 +1,17 @@
 const { createClient } = require('@supabase/supabase-js')
 
-// Inisialisasi Supabase SDK Client
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY
-const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Bikin client-nya null dulu di awal biar gak crash kalau env kosong
+let supabase = null;
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey)
+  } catch (e) {
+    console.error('Gagal inisialisasi Supabase Client:', e.message)
+  }
+}
 
 const PROVIDERS = {
   groq: {
