@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>K's Router</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 <style>
@@ -12,6 +12,7 @@
     --border: #EAEAEA;
     --text: #111111;
     --muted: #787774;
+    --accent: #2F6C9F; /* Warna Progres Bar Premium */
 
     --pale-green-bg: #EDF3EC;
     --pale-green-text: #346538;
@@ -33,8 +34,21 @@
     line-height: 1.6;
     height: 100dvh;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     overflow: hidden;
+  }
+
+  /* Structural Centered App Container */
+  .app-container {
+    width: 100%;
+    max-width: 820px; /* Lebar ideal golden ratio chat view */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    position: relative;
   }
 
   /* Header */
@@ -101,6 +115,33 @@
   }
   button.icon-btn:hover { color: var(--text); border-color: #d5d5d3; }
 
+  /* Play Store Loading Tracker Component */
+  .progress-container {
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+    display: none;
+    flex-shrink: 0;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.2s cubic-bezier(0.1, 0.8, 0.3, 1);
+  }
+  .pct-counter {
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--pale-blue-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: none;
+  }
+
   /* Comparison Mobile Tabs Container */
   #compare-tabs {
     display: none;
@@ -132,6 +173,7 @@
     display: flex;
     width: 100%;
     overflow: hidden;
+    background: var(--canvas);
   }
 
   /* Messages View */
@@ -143,7 +185,6 @@
     height: 100%;
   }
 
-  /* View management for layout splitting */
   #view-b {
     display: none;
     border-left: 1px solid var(--border);
@@ -153,20 +194,22 @@
     flex: 1;
     overflow-y: auto;
     width: 100%;
-    max-width: 720px;
-    margin: 0 auto;
+    padding: 8px 0;
   }
 
   .msg {
-    padding: 1rem 1.25rem;
+    padding: 1.2rem 1.25rem;
     border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    transition: background 0.2s;
   }
+  .msg:last-child { border-bottom: none; }
 
   .msg-meta {
     font-family: 'SF Mono', 'JetBrains Mono', monospace;
     font-size: 0.68rem;
     color: var(--muted);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.6rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -192,8 +235,8 @@
   .msg-provider { color: var(--muted); font-size: 0.65rem; text-transform: none; letter-spacing: 0; }
 
   /* Markdown content */
-  .msg-content { color: var(--text); font-size: 0.92rem; }
-  .msg-content p { margin-bottom: 0.55rem; }
+  .msg-content { color: var(--text); font-size: 0.94rem; line-height: 1.6; }
+  .msg-content p { margin-bottom: 0.6rem; }
   .msg-content p:last-child { margin-bottom: 0; }
   .msg-content code {
     font-family: 'SF Mono', monospace;
@@ -210,7 +253,7 @@
     border-radius: 8px;
     padding: 0.75rem 1rem;
     overflow-x: auto;
-    margin: 0.5rem 0;
+    margin: 0.6rem 0;
     position: relative;
   }
   .msg-content pre code {
@@ -218,28 +261,17 @@
     border: none;
     padding: 0;
     color: var(--pale-green-text);
-    font-size: 0.82em;
+    font-size: 0.85em;
   }
   .msg-content strong { color: var(--text); font-weight: 700; }
-  .msg-content ul, .msg-content ol { padding-left: 1.25rem; margin-bottom: 0.55rem; }
+  .msg-content ul, .msg-content ol { padding-left: 1.25rem; margin-bottom: 0.6rem; }
   .msg-content li { margin-bottom: 0.2rem; }
-  .msg-content a { color: var(--pale-blue-text); }
   .msg-content h1, .msg-content h2, .msg-content h3 {
     color: var(--text);
-    margin: 0.75rem 0 0.4rem;
-    font-size: 1rem;
+    margin: 0.85rem 0 0.4rem;
+    font-size: 1.05rem;
     font-weight: 700;
   }
-
-  /* thinking dots */
-  .dots span {
-    animation: blink 1.2s infinite;
-    opacity: 0;
-    color: var(--muted);
-  }
-  .dots span:nth-child(2) { animation-delay: 0.2s; }
-  .dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
 
   /* actions */
   .msg-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
@@ -283,6 +315,7 @@
     color: var(--muted);
     text-align: center;
     padding: 2rem;
+    background: var(--canvas);
   }
   #empty .mark {
     font-family: 'SF Mono', monospace;
@@ -300,54 +333,82 @@
     font-family: 'SF Mono', monospace;
   }
 
-  /* footer */
-  footer {
-    padding: 0.85rem 1.25rem;
-    border-top: 1px solid var(--border);
+  /* Premium Floating Footer Wrapper */
+  .footer-container {
+    padding: 0.75rem 1rem env(safe-area-inset-bottom, 0.75rem);
     background: var(--surface);
-    display: flex;
-    gap: 0.6rem;
-    align-items: flex-end;
+    border-top: 1px solid var(--border);
     flex-shrink: 0;
-    max-width: 720px;
     width: 100%;
-    margin: 0 auto;
   }
+
+  footer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    width: 100%;
+  }
+
   textarea#input {
     flex: 1;
     background: var(--canvas);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 20px; /* Rounded pill styling */
     color: var(--text);
-    padding: 0.65rem 0.85rem;
-    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.92rem;
     font-family: inherit;
     resize: none;
-    height: 42px;
+    height: 38px;
     max-height: 140px;
     outline: none;
     transition: border-color 0.15s;
+    line-height: 1.4;
   }
-  textarea#input:focus { border-color: #c7c7c4; }
+  textarea#input:focus { border-color: var(--accent); background: var(--surface); }
   textarea#input::placeholder { color: var(--muted); }
+
   button#send {
     background: #111111;
     color: #FFFFFF;
     border: none;
-    border-radius: 6px;
-    padding: 0 1.1rem;
-    height: 42px;
-    font-weight: 600;
-    font-size: 0.85rem;
+    border-radius: 50%; /* Circle send button style */
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    white-space: nowrap;
+    transition: background 0.15s, transform 0.1s, opacity 0.15s;
+    flex-shrink: 0;
   }
-  button#send:hover { background: #333333; }
-  button#send:active { transform: scale(0.98); }
-  button#send:disabled { opacity: 0.35; cursor: not-allowed; }
+  button#send:hover { background: var(--accent); }
+  button#send:active { transform: scale(0.92); }
+  button#send:disabled { opacity: 0.25; cursor: not-allowed; background: #111111 !important; }
 
-  #upload-btn { flex-shrink: 0; }
+  #upload-btn { 
+    height: 38px; 
+    width: 38px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    border-radius: 50%;
+  }
+
+  #effort-select {
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    color: var(--text);
+    font-size: 0.78rem;
+    padding: 0 0.6rem;
+    height: 38px;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  #effort-select:focus { border-color: var(--accent); }
 
   /* setup overlay */
   #setup {
@@ -360,7 +421,7 @@
     justify-content: center;
     gap: 1rem;
     padding: 2rem;
-    z-index: 100;
+    z-index: 1000;
   }
   #setup.hidden { display: none; }
   #setup .logo-big { font-family: 'SF Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--text); }
@@ -393,12 +454,13 @@
   }
   #save-token:hover { background: #333333; }
 
-  /* Responsive styling for desktop vs mobile layout */
+  /* Responsive Control */
   @media (min-width: 768px) {
     #compare-tabs { display: none !important; }
     .chat-view { display: flex !important; width: 50%; }
   }
   @media (max-width: 767px) {
+    .app-container { border-left: none; border-right: none; }
     #view-b.active-tab { display: flex !important; width: 100%; }
     #view-a.active-tab { display: flex !important; width: 100%; }
     #view-a:not(.active-tab) { display: none !important; }
@@ -416,68 +478,80 @@
   <button id="save-token">Masuk</button>
 </div>
 
-<header>
-  <span class="logo">K'sRouter</span>
-  <div class="signal" id="signal">
-    <div class="signal-dot"></div>
-    <span id="provider-label">idle</span>
-  </div>
-  <div class="spacer"></div>
-  <select id="provider-select">
-    <option value="">Auto</option>
-    <option value="compare">⚔️ Compare Mode</option>
-    <option value="groq">Llama 3.3</option>
-    <option value="github_gpt">GPT-4o mini</option>
-    <option value="nvidia_qwen">Qwen 3.5</option>
-    <option value="nvidia_deepseek">DeepSeek V4 Pro</option>
-    <option value="nvidia_z_ai">GLM 5.2</option>
-    <option value="kilo">Haiku 4.5</option>
-    <option value="cerebras">Gemma 4</option>
-    <option value="github_mistral">Mistral small</option>
-    <option value="google_gemini">Gemini 2.5 Flah</option>
-  </select>
-  <button class="icon-btn" id="clear-btn" title="Clear chat">clear</button>
-</header>
-  
-<div id="compare-tabs">
-  <button class="tab-btn active" id="tab-a-btn">Model A</button>
-  <button class="tab-btn" id="tab-b-btn">Model B</button>
-</div>
+<div class="app-container">
+  <header>
+    <span class="logo">K'sRouter</span>
+    <div class="signal" id="signal">
+      <div class="signal-dot"></div>
+      <span id="provider-label">idle</span>
+    </div>
+    <div class="spacer"></div>
+    <span id="progress-pct" class="pct-counter">0%</span>
+    <select id="provider-select">
+      <option value="">Auto</option>
+      <option value="compare">⚔️ Compare Mode</option>
+      <option value="groq">Llama 3.3</option>
+      <option value="github_gpt">GPT-4o mini</option>
+      <option value="nvidia_qwen">Qwen 3.5</option>
+      <option value="nvidia_deepseek">DeepSeek V4 Pro</option>
+      <option value="nvidia_z_ai">GLM 5.2</option>
+      <option value="kilo">Haiku 4.5</option>
+      <option value="cerebras">Gemma 4</option>
+      <option value="github_mistral">Mistral small</option>
+      <option value="google_gemini">Gemini 2.5 Flash</option>
+    </select>
+    <button class="icon-btn" id="clear-btn" title="Clear chat">clear</button>
+  </header>
 
-<div id="workspace">
-  <!-- View A (Default & Comparison Side A) -->
-  <div id="view-a" class="chat-view active-tab">
-    <div id="messages">
-      <div id="empty">
-        <div class="mark">/</div>
-        <p>
-          Ketik pesan untuk mulai.<br>
-          Gunakan <code>/search query</code> untuk real-time data.
-        </p>
+  <!-- Play Store Linear Progress Bar Integration -->
+  <div class="progress-container" id="progressContainer">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+    
+  <div id="compare-tabs">
+    <button class="tab-btn active" id="tab-a-btn">Model A</button>
+    <button class="tab-btn" id="tab-b-btn">Model B</button>
+  </div>
+
+  <div id="workspace">
+    <!-- View A -->
+    <div id="view-a" class="chat-view active-tab">
+      <div id="messages">
+        <div id="empty">
+          <div class="mark">/</div>
+          <p>
+            Ketik pesan untuk mulai.<br>
+            Gunakan <code>/search query</code> untuk real-time data.
+          </p>
+        </div>
       </div>
+    </div>
+
+    <!-- View B -->
+    <div id="view-b" class="chat-view">
+      <div id="messages-b"></div>
     </div>
   </div>
 
-  <!-- View B (Comparison Side B) -->
-  <div id="view-b" class="chat-view">
-    <div id="messages-b"></div>
+  <div class="footer-container">
+    <footer>
+      <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
+      <button class="icon-btn" id="upload-btn" type="button" title="Inject file ke prompt">📎</button>
+
+      <select id="effort-select">
+        <option value="low">😴 Low</option>
+        <option value="medium" selected>😮‍💨 Medium</option>
+        <option value="high">😬 High</option>
+      </select>
+      
+      <textarea id="input" placeholder="Pesan..." rows="1"></textarea>
+      <button id="send" title="Kirim">
+        <!-- Modern minimalist arrow up icon -->
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+      </button>
+    </footer>
   </div>
 </div>
-
-<footer>
- 
-  <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
-  <button class="icon-btn" id="upload-btn" type="button" title="Inject file ke prompt">📎</button>
-
-  <select id="effort-select" style="background: var(--surface); border: 1px solid var(--border); border-radius: 2px; color: var(--text); font-size: 0.78rem; padding: 0.35rem 0.5rem; outline: none; cursor: pointer; font-family: inherit;">
-    <option value="low">😴 Low Effort</option>
-    <option value="medium" selected>😮‍💨 Medium Effort</option>
-    <option value="high">😬 High Effort</option>
-  </select>
-  
-  <textarea id="input" placeholder="Pesan... atau /search query" rows="1"></textarea>
-  <button id="send">Kirim</button>
-</footer>
 
 <script>
   const CHAT_ENDPOINT = '/api/chat'
@@ -509,7 +583,45 @@
   const tabABtn = document.getElementById('tab-a-btn')
   const tabBBtn = document.getElementById('tab-b-btn')
 
+  // Loading Progress Bar Dom Elements
+  const progressContainer = document.getElementById('progressContainer')
+  const progressBar = document.getElementById('progressBar')
+  const progressPct = document.getElementById('progress-pct')
+  let progressInterval;
+
   if (TOKEN) setupEl.classList.add('hidden')
+
+  // Play Store Loading Animation Logic
+  function startProgress() {
+    progressContainer.style.display = 'block'
+    progressPct.style.display = 'block'
+    let pct = 0
+    progressBar.style.width = '0%'
+    progressPct.textContent = '0%'
+
+    clearInterval(progressInterval)
+    progressInterval = setInterval(() => {
+      if (pct < 65) {
+        pct += Math.floor(Math.random() * 12) + 4
+      } else if (pct < 93) {
+        pct += Math.floor(Math.random() * 3) + 1
+      }
+      if (pct > 96) pct = 96
+      
+      progressBar.style.width = pct + '%'
+      progressPct.textContent = pct + '%'
+    }, 120)
+  }
+
+  function stopProgress() {
+    clearInterval(progressInterval)
+    progressBar.style.width = '100%'
+    progressPct.textContent = '100%'
+    setTimeout(() => {
+      progressContainer.style.display = 'none'
+      progressPct.style.display = 'none'
+    }, 350)
+  }
 
   // UI Layout Handler untuk Compare Mode
   providerSelect.onchange = () => {
@@ -568,6 +680,7 @@
     messagesEl.appendChild(emptyEl)
     emptyEl.style.display = 'flex'
     setSignal('idle')
+    stopProgress()
   }
 
   uploadBtn.onclick = () => { fileInjector.click() }
@@ -584,7 +697,7 @@
       const content = await file.text()
       const fileContent = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${file.name}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya dan berikan respon yang bisa saya paste langsung ke file (kode yang sudah diperbaiki, dan penjelasan singkat).`
       inputEl.value = fileContent
-      inputEl.style.height = '42px'
+      inputEl.style.height = '38px'
       inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
       inputEl.focus()
       fileInjector.value = ''
@@ -598,21 +711,20 @@
     if (state === 'routing') {
       signalEl.classList.add('on')
       providerLabel.textContent = 'routing...'
+      startProgress() // Trigger animas progres bar
     } else if (state === 'provider') {
       signalEl.classList.add('on')
       providerLabel.textContent = label
+      stopProgress() // Hentikan progres bar
     } else {
       signalEl.classList.remove('on')
       providerLabel.textContent = 'idle'
+      stopProgress()
     }
   }
 
-  // Fungsi Deteksi Otomatis Code Block untuk Download File
   function attachDownloadButtons(container, rawText) {
-    // Cari semua elemen <pre> yang di-generate oleh marked
     const preBlocks = container.querySelectorAll('pre');
-    
-    // Gunakan regex untuk mengambil isi kode mentah berdasarkan urutan penemuan block
     const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
     let match;
     let idx = 0;
@@ -623,7 +735,6 @@
       const targetPre = preBlocks[idx];
 
       if (targetPre) {
-        // Deteksi ekstensi file berdasarkan bahasa code block
         let ext = '.' + lang;
         if (lang === 'js' || lang === 'javascript') ext = '.js';
         if (lang === 'py' || lang === 'python') ext = '.py';
@@ -656,6 +767,9 @@
     const targetContainer = opts.target || messagesEl;
     if (targetContainer === messagesEl) emptyEl.style.display = 'none';
 
+    // Jika pesan bertipe thinking biasa, kita intercept agar tidak merusak layout bubble chat baru
+    if (opts.thinking) return null;
+
     const div = document.createElement('div')
     div.className = 'msg'
 
@@ -683,9 +797,7 @@
     const contentDiv = document.createElement('div')
     contentDiv.className = 'msg-content'
 
-    if (opts.thinking) {
-      contentDiv.innerHTML = '<span class="dots"><span>.</span><span>.</span><span>.</span></span>'
-    } else if (role === 'search') {
+    if (role === 'search') {
       if (content.answer) {
         const ans = document.createElement('div')
         ans.className = 'search-answer'
@@ -709,7 +821,7 @@
 
     div.appendChild(contentDiv)
 
-    if (role === 'ai' && !opts.thinking) {
+    if (role === 'ai') {
       const actions = document.createElement('div')
       actions.className = 'msg-actions'
       const copyBtn = document.createElement('button')
@@ -723,7 +835,6 @@
       actions.appendChild(copyBtn)
       div.appendChild(actions)
 
-      // Fitur Otomatis Deteksi Code Block untuk Download
       if (content.includes('```')) {
         setTimeout(() => attachDownloadButtons(contentDiv, content), 50);
       }
@@ -733,18 +844,11 @@
     targetContainer.scrollTop = targetContainer.scrollHeight
     return div
   }
-async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
-    const thinking = addMsg('ai', '', { thinking: true, target: targetContainer })
+
+  async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
     try {
-      // Ambil nilai effort saat ini dari dropdown UI
       const currentEffort = effortSelect.value;
-      
-      // Gabungkan payload bawaan dengan parameter effort
-      const payload = { 
-        ...bodyPayload,
-        effort: currentEffort
-      };
-      
+      const payload = { ...bodyPayload, effort: currentEffort };
       if (provider) payload.provider = provider;
 
       const res = await fetch(CHAT_ENDPOINT, {
@@ -754,19 +858,16 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
       })
 
       if (res.status === 401) {
-        thinking.remove()
         addMsg('error', 'Unauthorized — token salah.', { target: targetContainer })
         return null;
       }
       if (!res.ok) {
-        thinking.remove()
         addMsg('error', 'Error ' + res.status + ' — provider gagal.', { target: targetContainer })
         return null;
       }
 
       const data = await res.json()
       const reply = data.choices?.[0]?.message?.content || 'No response.'
-      thinking.remove()
       
       addMsg('ai', reply, { provider: data._provider, target: targetContainer })
       if (labelPrefix) {
@@ -774,7 +875,6 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
       }
       return reply;
     } catch (err) {
-      thinking.remove()
       addMsg('error', 'Request failed: ' + err.message, { target: targetContainer })
       return null;
     }
@@ -782,7 +882,6 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
 
   async function doSearch(query) {
     addMsg('user', '/search ' + query, { target: messagesEl })
-    const thinking = addMsg('search', '', { thinking: true, target: messagesEl })
     setSignal('routing')
     try {
       const res = await fetch(SEARCH_ENDPOINT, {
@@ -791,7 +890,6 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
         body: JSON.stringify({ query })
       })
       const data = await res.json()
-      thinking.remove()
       addMsg('search', data, { target: messagesEl })
 
       const context = 'Use ONLY the following search results to answer. Do not use prior knowledge.\n\n' +
@@ -807,7 +905,6 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
       if (reply) history.push({ role: 'assistant', content: reply })
 
     } catch (err) {
-      thinking.remove()
       addMsg('error', 'Search failed: ' + err.message, { target: messagesEl })
     } finally {
       sendBtn.disabled = false
@@ -820,7 +917,7 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
     if (!text) return
 
     inputEl.value = ''
-    inputEl.style.height = '42px'
+    inputEl.style.height = '38px'
 
     if (text.startsWith('/search ')) {
       await doSearch(text.slice(8).trim())
@@ -833,7 +930,6 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
     const mode = providerSelect.value
 
     if (mode === 'compare') {
-      // Jalankan Mode Pembanding: Tembak dua provider andalan sekaligus
       addMsg('user', text, { target: messagesEl })
       addMsg('user', text, { target: messagesBEl })
       
@@ -842,18 +938,15 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
 
       setSignal('routing')
 
-      // Request berjalan paralel secara serentak
       const [replyA, replyB] = await Promise.all([
         fetchModelResponse('nvidia_deepseek', { messages: history }, messagesEl, 'tab-a-btn'),
         fetchModelResponse('flatkey', { messages: history }, messagesBEl, 'tab-b-btn')
       ]);
 
-      // Ambil respon salah satu untuk kelanjutan chain history
       if (replyA) history.push({ role: 'assistant', content: replyA })
       setSignal('idle')
       sendBtn.disabled = false
     } else {
-      // Mode Normal (Single Provider / Auto Router)
       addMsg('user', text, { target: messagesEl })
       setSignal('routing')
       const reply = await fetchModelResponse(mode, { messages: history }, messagesEl)
@@ -872,9 +965,9 @@ async function fetchModelResponse(provider, bodyPayload, targetContainer, labelP
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   })
   inputEl.addEventListener('input', () => {
-    inputEl.style.height = '42px'
+    inputEl.style.height = '38px'
     inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
   })
 </script>
 </body>
-</html>
+  </html>
