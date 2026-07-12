@@ -697,6 +697,10 @@
     const targetContainer = opts.target || messagesEl;
     if (targetContainer === messagesEl) emptyEl.style.display = 'none';
 
+    // Bungkus pake msg-wrapper biar posisi bubble-nya bener (kanan/kiri)
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper ${role === 'user' ? 'user-align' : 'ai-align'}`;
+
     const div = document.createElement('div');
     div.className = 'msg';
     div.setAttribute('data-role', role);
@@ -712,15 +716,19 @@
     if (opts.provider) {
       const pSpan = document.createElement('span');
       pSpan.className = 'msg-provider';
-      pSpan.textContent = opts.provider;
+      pSpan.style = "font-size:10px; font-weight:600; color:var(--muted); margin-left:5px;";
+      pSpan.textContent = opts.provider.toUpperCase();
       meta.appendChild(pSpan);
     }
 
     const ts = document.createElement('span');
     ts.className = 'msg-ts';
+    ts.style = "font-size:10px; color:var(--muted); margin-left:5px;";
     ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     meta.appendChild(ts);
-    div.appendChild(meta);
+    
+    // Taruh meta di luar bubble biar rapi kayak layout baru lo
+    wrapper.appendChild(meta);
 
     if (opts.fileName) {
       const fileBox = document.createElement('div');
@@ -729,9 +737,42 @@
       div.appendChild(fileBox);
     }
 
+    // --- LOGIKA UTAMA EKSTRAKSI THOUGHT BOX ---
+    let finalContent = content || '';
+    let thoughtText = '';
+
+    // Cek apakah ada properti reasoning_content dari API
+    if (opts.reasoning) {
+      thoughtText = opts.reasoning.trim();
+    } 
+    // Atau cek apakah teksnya dibungkus format manual <think>...</think>
+    else if (finalContent.includes('<think>') && finalContent.includes('</think>')) {
+      const parts = finalContent.split('</think>');
+      thoughtText = parts[0].replace('<think>', '').trim();
+      finalContent = parts[1] ? parts[1].trim() : '';
+    }
+
+    // Jika ada teks pemikiran/reasoning, buatin komponen detail dropdown-nya
+    if (thoughtText) {
+      const details = document.createElement('details');
+      details.className = 'thought-box';
+      details.open = true; // Otomatis kebuka pas baru masuk biar user tau AI lagi mikir apa
+      
+      const summary = document.createElement('summary');
+      summary.textContent = '💭 Thinking Process (click to toggle)';
+      
+      const thoughtDiv = document.createElement('div');
+      thoughtDiv.className = 'thought-content';
+      thoughtDiv.textContent = thoughtText;
+      
+      details.appendChild(summary);
+      details.appendChild(thoughtDiv);
+      div.appendChild(details);
+    }
+
     const contentDiv = document.createElement('div');
     contentDiv.className = 'msg-content';
-    contentDiv.innerHTML = marked.parse(content || '...');
+    contentDiv.innerHTML = marked.parse(finalContent || 'No response text.');
     div.appendChild(contentDiv);
 
     const actions = document.createElement('div');
@@ -742,13 +783,19 @@
       copyBtn.className = 'action-btn';
       copyBtn.textContent = 'copy';
       copyBtn.onclick = () => {
-        navigator.clipboard.writeText(content);
+        navigator.clipboard.writeText(finalContent);
         copyBtn.textContent = 'copied';
         setTimeout(() => { copyBtn.textContent = 'copy'; }, 1500);
       };
       actions.appendChild(copyBtn);
       div.appendChild(actions);
-    } else if (role === 'user') {
+    }
+
+    wrapper.appendChild(div);
+    targetContainer.appendChild(wrapper);
+    targetContainer.scrollTop = targetContainer.scrollHeight;
+    return wrapper;
+  } else if (role === 'user') {
       const editBtn = document.createElement('button');
       editBtn.className = 'action-btn';
       editBtn.textContent = 'edit';
@@ -788,24 +835,37 @@
         body: JSON.stringify(payload)
       });
 
-      if (res.status === 429) {
-        triggerLimitScreen();
-        return null;
-      }
+      if (res.status === 429) { triggerLimitScreen(); return null; }
       if (res.status === 401) { addMsg('error', 'Unauthorized — token salah.', { target: targetContainer }); return null; }
       if (!res.ok) { addMsg('error', 'Error ' + res.status + ' — provider gagal.', { target: targetContainer }); return null; }
 
       const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || 'No response.';
-      addMsg('ai', reply, { provider: data._provider, target: targetContainer });
-      if (labelPrefix && document.getElementById(labelPrefix)) document.getElementById(labelPrefix).textContent = data._provider.toUpperCase();
-      return reply;
+      
+      // Ambil teks utama dan teks reasoning dari response API
+      const messageObj = data.choices?.[0]?.message || {};
+      const reply = messageObj.content || '';
+      const reasoning = messageObj.reasoning_content || ''; // Properti khusus DeepSeek R1 / Reasoning model
+
+      // Kirim data ke addMsg yang baru dengan opsi reasoning terpisah
+      addMsg('ai', reply, { 
+        provider: data._provider || provider, 
+        target: targetContainer,
+        reasoning: reasoning 
+      });
+
+      if (labelPrefix && document.getElementById(labelPrefix)) {
+        document.getElementById(labelPrefix).textContent = (data._provider || provider).toUpperCase();
+      }
+      
+      // Kembalikan format gabungan biar history internal browser tetep kesimpen utuh beserta proses mikirnya
+      return reasoning ? `<think>${reasoning}</think>\n${reply}` : reply;
+      
     } catch (err) {
       addMsg('error', 'Request failed: ' + err.message, { target: targetContainer }); 
       return null;
     }
   }
-
+  
   async function send() {
     let text = inputEl.value.trim();
     if (!text && !attachedFileContent) return;
