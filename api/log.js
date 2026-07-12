@@ -90,6 +90,31 @@ module.exports = async function handler(req, res) {
         : null
     })).sort((a, b) => b.totalTokens - a.totalTokens)
 
+    // Effort distribution
+    const effortMap = { low: 0, medium: 0, high: 0 }
+    data.forEach(r => {
+      const key = (r.effort || 'medium').toLowerCase().trim()
+      if (effortMap[key] === undefined) effortMap[key] = 0
+      effortMap[key]++
+    })
+
+    // Day aggregation (key: YYYY-MM-DD dari created_at)
+    const dayMap = {}
+    data.forEach(r => {
+      const day = r.created_at.slice(0, 10) // "2026-07-12T05:47:44" -> "2026-07-12"
+      if (!dayMap[day]) {
+        dayMap[day] = { date: day, requests: 0, tokensIn: 0, tokensOut: 0, totalTokens: 0, success: 0 }
+      }
+      const d = dayMap[day]
+      d.requests++
+      if (r.success) d.success++
+      d.tokensIn    += r.tokens_in  || 0
+      d.tokensOut   += r.tokens_out || 0
+      d.totalTokens += (r.tokens_in || 0) + (r.tokens_out || 0)
+    })
+
+    const byDay = Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date))
+
     // Recent rows
     const { data: recent, error: recentError } = await supabase
       .from('usage_logs')
@@ -112,6 +137,8 @@ module.exports = async function handler(req, res) {
         totalTokensOut: data.reduce((a, r) => a + (r.tokens_out || 0), 0)
       },
       byProvider,
+      byDay,
+      effortDistribution: effortMap,
       recent
     })
   } catch (err) {
