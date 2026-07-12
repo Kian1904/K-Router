@@ -91,14 +91,15 @@ const EFFORT_MAP = {
   high:   { temperature: 1.0, max_tokens: 4096 }
 }
 
-// ── Supabase logger (fire-and-forget, gak block response) ──
+// PASTIKAN ada kata kunci "async" sebelum "function"
 async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut, latencyMs, success, errorMsg }) {
   try {
-    const { data, error } = await supabase.from('usage_logs').insert([{
+    // Karena lo pakai supabase-js client di atas, mending pakai syntax ini biar rapi dan aman
+    const { error } = await supabase.from('usage_logs').insert([{
       provider: provider || 'unknown',
       model: model || 'unknown',
       effort: effort || 'medium',
-      thinking: Boolean(thinking), // Paksa jadi true/false asli
+      thinking: Boolean(thinking),
       tokens_in: tokensIn ? parseInt(tokensIn) : null,
       tokens_out: tokensOut ? parseInt(tokensOut) : null,
       latency_ms: latencyMs ? parseInt(latencyMs) : null,
@@ -107,13 +108,13 @@ async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut
     }]);
 
     if (error) {
-      // Ini bakal nampilin eror asli dari Supabase di log Vercel lo!
       console.error('Supabase Database Error:', error.message, error.details);
     }
   } catch (err) {
     console.error('Supabase log exception:', err.message);
   }
 }
+
 
 {
   const url = process.env.SUPABASE_URL
