@@ -438,14 +438,6 @@
   </select>
   <button class="icon-btn" id="clear-btn" title="Clear chat">clear</button>
 </header>
-
-<select id="effort-select" style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.78rem; padding: 0.35rem 0.5rem; outline: none; cursor: pointer; font-family: inherit;">
-    <option value="low">😴 Low Effort</option>
-    <option value="medium" selected>😮‍💨 Medium Effort</option>
-    <option value="high">😬 High Effort</option>
-  </select>
-
-</header>
   
 <div id="compare-tabs">
   <button class="tab-btn active" id="tab-a-btn">Model A</button>
@@ -476,6 +468,12 @@
  
   <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
   <button class="icon-btn" id="upload-btn" type="button" title="Inject file ke prompt">📎</button>
+
+  <select id="effort-select" style="background: var(--surface); border: 1px solid var(--border); border-radius: 2px; color: var(--text); font-size: 0.78rem; padding: 0.35rem 0.5rem; outline: none; cursor: pointer; font-family: inherit;">
+    <option value="low">😴 Low Effort</option>
+    <option value="medium" selected>😮‍💨 Medium Effort</option>
+    <option value="high">😬 High Effort</option>
+  </select>
   
   <textarea id="input" placeholder="Pesan... atau /search query" rows="1"></textarea>
   <button id="send">Kirim</button>
