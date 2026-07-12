@@ -1,16 +1,16 @@
-const { createClient } = require('@supabase/supabase-js')
-
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY
-
-// Bikin client-nya null dulu di awal biar gak crash kalau env kosong
+// PROTEKSI EKSTRA: Server gak bakal crash meskipun library-nya belum terinstall
 let supabase = null;
-if (supabaseUrl && supabaseKey) {
-  try {
-    supabase = createClient(supabaseUrl, supabaseKey)
-  } catch (e) {
-    console.error('Gagal inisialisasi Supabase Client:', e.message)
+try {
+  const { createClient } = require('@supabase/supabase-js');
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+  
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
   }
+} catch (e) {
+  console.warn('[Supabase Setup Warning] Library @supabase/supabase-js belum siap atau error:', e.message);
+}
 
 const PROVIDERS = {
   groq: {
@@ -76,7 +76,7 @@ const PROVIDERS = {
     model: 'gemini-2.5-flash',
     type: 'google'
   }
-}
+};
 
 const CASCADE = [
   'groq',
@@ -88,22 +88,19 @@ const CASCADE = [
   'cerebras',
   'github_mistral',
   'google_gemini'
-]
+];
 
 // Effort → temperature + max_tokens
 const EFFORT_MAP = {
   low:    { temperature: 0.3, max_tokens: 1024 },
   medium: { temperature: 0.7, max_tokens: 2048 },
   high:   { temperature: 1.0, max_tokens: 4096 }
-}
+};
 
-// Fungsi Logger Tunggal - Bersih & Non-blocking
+// Fungsi Logger Tunggal - Bersih & Safe
 async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut, latencyMs, success, errorMsg }) {
-    if (!supabase) {
-    console.warn('[Supabase Logger] Dicancel karena client belum siap / env kosong.');
-    return;
-    }
-
+  if (!supabase) return; // Skip otomatis kalau supabase client belum siap
+  
   try {
     const { error } = await supabase.from('usage_logs').insert([{
       provider: provider || 'unknown',
@@ -118,10 +115,10 @@ async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut
     }]);
 
     if (error) {
-      console.error('Supabase Database Error:', error.message, error.details)
+      console.error('Supabase Database Error:', error.message, error.details);
     }
   } catch (err) {
-    console.error('Supabase log exception:', err.message)
+    console.error('Supabase log exception:', err.message);
   }
 }
 
@@ -130,81 +127,81 @@ function convertToGoogleFormat(messages) {
   return messages.map(msg => ({
     role: msg.role === 'user' ? 'user' : 'model',
     parts: [{ text: msg.content }]
-  }))
+  }));
 }
 
 function convertGoogleResponse(googleResponse) {
-  const text = googleResponse.candidates?.[0]?.content?.parts?.[0]?.text || 'No response'
-  const meta = googleResponse.usageMetadata || {}
+  const text = googleResponse.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+  const meta = googleResponse.usageMetadata || {};
   return {
     choices: [{ message: { role: 'assistant', content: text } }],
     usage: {
       prompt_tokens:     meta.promptTokenCount     || null,
       completion_tokens: meta.candidatesTokenCount || null
     }
-  }
+  };
 }
 
 // ── Main handler ──
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.method === 'OPTIONS') return res.status(200).end()
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const auth = req.headers.authorization
+  const auth = req.headers.authorization;
   if (auth !== 'Bearer ' + process.env.BEARER_TOKEN) {
-    return res.status(401).json({ error: 'Unauthorized' })
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { messages = [], provider, effort = 'medium', thinking = false, stream, ...rest } = req.body
-  let selected = provider
+  const { messages = [], provider, effort = 'medium', thinking = false, stream, ...rest } = req.body;
+  let selected = provider;
 
-  const lastUserMessage = messages[messages.length - 1]?.content || ''
+  const lastUserMessage = messages[messages.length - 1]?.content || '';
 
   // Auto Smart Router
   if (selected === 'auto_router') {
     const isCodingTask = lastUserMessage.includes('.js') ||
                          lastUserMessage.includes('.html') ||
                          lastUserMessage.includes('```javascript') ||
-                         /\b(function|const|let|import|export|class)\b/i.test(lastUserMessage)
+                         /\b(function|const|let|import|export|class)\b/i.test(lastUserMessage);
 
-    const isWritingTask = /\b(outline|dokumen|cerita|artikel|naskah|resume|susun)\b/i.test(lastUserMessage)
+    const isWritingTask = /\b(outline|dokumen|cerita|artikel|naskah|resume|susun)\b/i.test(lastUserMessage);
 
     if (isCodingTask) {
-      console.log('[Smart Router] → NVIDIA DeepSeek (coding)')
-      selected = 'nvidia_deepseek'
+      console.log('[Smart Router] → NVIDIA DeepSeek (coding)');
+      selected = 'nvidia_deepseek';
     } else if (isWritingTask) {
-      console.log('[Smart Router] → Google Gemini (writing)')
-      selected = 'google_gemini'
+      console.log('[Smart Router] → Google Gemini (writing)');
+      selected = 'google_gemini';
     } else {
-      console.log('[Smart Router] → Groq Llama (general)')
-      selected = 'groq'
+      console.log('[Smart Router] → Groq Llama (general)');
+      selected = 'groq';
     }
   }
 
-  const targets = selected && PROVIDERS[selected] ? [selected] : CASCADE
-  const effortParams = EFFORT_MAP[effort] || EFFORT_MAP.medium
+  const targets = selected && PROVIDERS[selected] ? [selected] : CASCADE;
+  const effortParams = EFFORT_MAP[effort] || EFFORT_MAP.medium;
 
   for (const id of targets) {
-    const p = PROVIDERS[id]
+    const p = PROVIDERS[id];
     if (!p || !p.key) {
-      console.warn((p ? p.name : id) + ': API key not configured or provider missing')
-      continue
+      console.warn((p ? p.name : id) + ': API key not configured or provider missing');
+      continue;
     }
 
-    const startTime = Date.now()
+    const startTime = Date.now();
 
     try {
-      console.log(`[${p.name}] Attempting — effort: ${effort}, thinking: ${thinking}`)
+      console.log(`[${p.name}] Attempting — effort: ${effort}, thinking: ${thinking}`);
 
-      let fetchBody, fetchHeaders, fetchUrl
+      let fetchBody, fetchHeaders, fetchUrl;
 
       if (p.type === 'google') {
-        fetchUrl = p.url + '?key=' + p.key
-        fetchHeaders = { 'Content-Type': 'application/json' }
+        fetchUrl = p.url + '?key=' + p.key;
+        fetchHeaders = { 'Content-Type': 'application/json' };
 
         fetchBody = {
           contents: convertToGoogleFormat(messages),
@@ -214,13 +211,13 @@ module.exports = async function handler(req, res) {
             ...(rest.temperature  !== undefined ? { temperature:     rest.temperature  } : {}),
             ...(rest.max_tokens   !== undefined ? { maxOutputTokens: rest.max_tokens   } : {})
           }
-        }
+        };
       } else {
-        fetchUrl = p.url
+        fetchUrl = p.url;
         fetchHeaders = {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + p.key
-        }
+        };
 
         fetchBody = {
           model:    p.model,
@@ -229,13 +226,13 @@ module.exports = async function handler(req, res) {
           temperature: effortParams.temperature,
           max_tokens:  effortParams.max_tokens,
           ...rest
-        }
+        };
 
         // Extended thinking — hanya untuk Kilo (Claude)
         if (thinking && id === 'kilo') {
-          fetchBody.thinking = { type: 'enabled', budget_tokens: 5000 }
-          fetchBody.temperature = 1
-          fetchBody.max_tokens  = Math.max(fetchBody.max_tokens, 8000)
+          fetchBody.thinking = { type: 'enabled', budget_tokens: 5000 };
+          fetchBody.temperature = 1;
+          fetchBody.max_tokens  = Math.max(fetchBody.max_tokens, 8000);
         }
       }
 
@@ -243,60 +240,60 @@ module.exports = async function handler(req, res) {
         method: 'POST',
         headers: fetchHeaders,
         body: JSON.stringify(fetchBody)
-      })
+      });
 
-      const latencyMs = Date.now() - startTime
-      console.log(`[${p.name}] Status: ${response.status} — ${latencyMs}ms`)
+      const latencyMs = Date.now() - startTime;
+      console.log(`[${p.name}] Status: ${response.status} — ${latencyMs}ms`);
 
       if (!response.ok) {
-        const errorBody = await response.text()
-        console.error(`[${p.name}] ${response.status}:`, errorBody)
+        const errorBody = await response.text();
+        console.error(`[${p.name}] ${response.status}:`, errorBody);
 
         logUsage({
           provider: p.name, model: p.model,
           effort, thinking, latencyMs,
           success: false, errorMsg: `HTTP ${response.status}`
-        })
-        continue
+        });
+        continue;
       }
 
-      let data = await response.json()
+      let data = await response.json();
 
       if (p.type === 'google') {
-        data = convertGoogleResponse(data)
+        data = convertGoogleResponse(data);
       }
 
-      const tokensIn  = data.usage?.prompt_tokens     || null
-      const tokensOut = data.usage?.completion_tokens  || null
+      const tokensIn  = data.usage?.prompt_tokens     || null;
+      const tokensOut = data.usage?.completion_tokens  || null;
 
       logUsage({
         provider: p.name, model: p.model,
         effort, thinking,
         tokensIn, tokensOut, latencyMs,
         success: true
-      })
+      });
 
-      console.log(`[${p.name}] OK — in: ${tokensIn}, out: ${tokensOut}, ${latencyMs}ms`)
+      console.log(`[${p.name}] OK — in: ${tokensIn}, out: ${tokensOut}, ${latencyMs}ms`);
 
-      data._provider  = p.name
+      data._provider  = p.name;
       data._model     = p.model
-      data._latencyMs = latencyMs
-      data._effort    = effort
-      data._thinking  = thinking
+      data._latencyMs = latencyMs;
+      data._effort    = effort;
+      data._thinking  = thinking;
 
-      return res.status(200).json(data)
+      return res.status(200).json(data);
 
     } catch (err) {
-      const latencyMs = Date.now() - startTime
-      console.error(`[${p.name}]`, err.message)
+      const latencyMs = Date.now() - startTime;
+      console.error(`[${p.name}]`, err.message);
 
       logUsage({
         provider: p.name, model: p.model,
         effort, thinking, latencyMs,
         success: false, errorMsg: err.message
-      })
+      });
     }
   }
 
-  return res.status(503).json({ error: 'All providers failed' })
-}
+  return res.status(503).json({ error: 'All providers failed' });
+};
