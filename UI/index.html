@@ -222,12 +222,13 @@
     padding: 40px 0;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 580px) {
     header { flex-direction: column; align-items: flex-start; }
     .meta-block { text-align: left; }
     .footer-row { flex-direction: column; align-items: stretch; }
-    .footer-left-group { flex-direction: column; }
-    .btn { justify-content: center; }
+    .footer-left-group { flex-direction: row; width: 100%; gap: 8px; }
+    .footer-left-group .btn { flex: 1; justify-content: center; }
+    .footer-row > .btn { width: 100%; justify-content: center; }
   }
 </style>
 </head>
@@ -251,15 +252,8 @@
   </div>
 
   <div class="footer-row">
-    <!-- Mengelompokkan tombol navigasi kiri agar berjejer rapi -->
     <div class="footer-left-group">
-      <a class="btn btn-ghost" href="dashboard.html">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-        </svg>
-        Dashboard Logs
-      </a>
+      <a class="btn btn-ghost" href="dashboard.html">Dashboard</a>
       <button class="btn btn-ghost" onclick="loadStatus()">Refresh</button>
     </div>
     <a class="btn" href="chat.html">Buka Chat →</a>
@@ -327,4 +321,4 @@
   setInterval(loadStatus, 30000);
 </script>
 </body>
-</html>
+  </html>
