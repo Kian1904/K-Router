@@ -93,6 +93,24 @@ const EFFORT_MAP = {
 
 // ── Supabase logger (fire-and-forget, gak block response) ──
 async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut, latencyMs, success, errorMsg }) {
+  try {
+    await supabase.from('usage_logs').insert([{
+      provider,
+      model,
+      effort: effort || 'medium',
+      thinking: thinking || false,
+      tokens_in: tokensIn,     // Di-map ke nama kolom SQL lo
+      tokens_out: tokensOut,   // Di-map ke nama kolom SQL lo
+      latency_ms: latencyMs,   // Di-map ke nama kolom SQL lo
+      success,
+      error_msg: errorMsg      // Di-map ke nama kolom SQL lo
+    }]);
+  } catch (err) {
+    console.error('Supabase log error:', err.message);
+  }
+} 
+
+{
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_KEY
   if (!url || !key) return // skip kalau env belum diset
