@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- Mencegah zoom paksa di Chrome & Safari Mobile -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>K's Router</title>
+<!-- Import Font Pasangan Dashboard: Inter dan Hedvig Letters Serif -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 <style>
   :root {
@@ -26,7 +28,7 @@
     --pill:      1440px;
     --radius:    12px;
     
-    /* Bubble theme configuration */
+    /* Bubble configuration */
     --user-bubble-bg: #130e30;
     --user-bubble-text: #ffffff;
     --ai-bubble-bg: #ffffff;
@@ -45,12 +47,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-  }
-  
-  .app-layout {
-    display: flex;
-    width: 100%;
-    height: 100%;
   }
   
   /* --- SETUP OVERLAY STYLING --- */
@@ -77,7 +73,7 @@
     border-radius: 8px;
     padding: 0.75rem 1rem;
     font-family: 'Share Tech Mono', monospace;
-    font-size: 16px; /* Cegah zoom on focus di iOS/Android */
+    font-size: 16px; /* Mencegah auto-zoom mobile */
     outline: none;
     color: var(--text);
     transition: border-color 0.15s, box-shadow 0.15s;
@@ -99,10 +95,17 @@
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
+    font-family: 'Inter', sans-serif;
     transition: opacity 0.15s;
   }
   #save-token:hover { opacity: 0.9; }
   
+  .app-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
   /* SIDEBAR UNTUK HISTORY PERSISTEN */
   #sidebar {
     width: 260px;
@@ -121,8 +124,8 @@
     background: var(--surface);
     border: 1px solid var(--border);
     padding: 0.6rem;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.78rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
     font-weight: 600;
     text-align: left;
     cursor: pointer;
@@ -138,6 +141,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    font-family: 'Inter', sans-serif;
   }
   .history-item {
     padding: 0.6rem 0.75rem;
@@ -165,23 +169,30 @@
     background: var(--surface);
     position: relative;
     width: 100%;
+    overflow: hidden;
   }
 
-  /* Header Controls - Perbaikan flexbox biar tidak kepotong di HP */
+  /* Header Controls - Flexbox solid anti-kepotong di mobile screen */
   header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
     width: 100%;
     overflow: hidden;
   }
-  .logo { font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .logo { 
+    font-family: 'Hedvig Letters Serif', serif; 
+    font-size: 1.05rem; 
+    font-weight: 600; 
+    color: var(--ink); 
+    white-space: nowrap; 
+    margin-left: 2px;
+  }
   
-  /* Persentase Progress bar/loading text style */
   .pct-counter {
     font-family: 'Share Tech Mono', monospace; 
     font-size: 11px; 
@@ -196,21 +207,22 @@
   
   .spacer { flex: 1; }
 
+  /* Menaikkan font ke 16px untuk mematikan auto-zoom bawaan browser mobile */
   select#provider-select {
     background: var(--surface); 
     border: 1px solid var(--border); 
     border-radius: 6px;
     color: var(--text); 
-    font-size: 0.8rem; 
-    padding: 0.35rem 0.5rem; 
+    font-size: 16px; 
+    padding: 0.3rem 0.4rem; 
     outline: none;
     font-family: 'Inter', sans-serif;
-    max-width: 110px;
+    max-width: 125px;
   }
   button.icon-btn {
     background: none; border: 1px solid var(--border); color: var(--muted);
     cursor: pointer; padding: 0.35rem 0.55rem; border-radius: 6px;
-    font-size: 0.8rem; font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem; font-family: 'Inter', sans-serif;
     white-space: nowrap;
   }
 
@@ -236,7 +248,7 @@
     max-width: 420px;
     box-shadow: 0 4px 12px rgba(159, 47, 45, 0.05);
   }
-  .limit-title { font-family: 'Share Tech Mono', monospace; color: var(--red-tx); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .limit-title { font-family: 'Inter', sans-serif; color: var(--red-tx); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
   .limit-desc { font-size: 0.88rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
 
   /* Workspace View & Container alignment */
@@ -256,7 +268,7 @@
   #messages, #messages-b { flex: 1; overflow-y: auto; width: 100%; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 
   /* Chat Bubble Architecture */
-  .msg-wrapper { display: flex; flex-direction: column; width: 100%; }
+  .msg-wrapper { display: flex; flex-direction: column; width: 100%; margin-bottom: 4px; }
   .msg-wrapper.user-align { align-items: flex-end; }
   .msg-wrapper.ai-align { align-items: flex-start; }
   
@@ -264,14 +276,19 @@
   .msg-wrapper.user-align .msg { background: var(--user-bubble-bg); color: var(--user-bubble-text); border-bottom-right-radius: 4px; }
   .msg-wrapper.ai-align .msg { background: var(--ai-bubble-bg); color: var(--ai-bubble-text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
 
-  .msg-meta { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 6px; text-transform: uppercase; }
+  .msg-meta { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 6px; text-transform: uppercase; }
   .msg-wrapper.user-align .msg-meta { justify-content: flex-end; padding-right: 4px; }
   .msg-wrapper.ai-align .msg-meta { justify-content: flex-start; padding-left: 4px; }
 
+  .tag { font-weight: 700; font-size: 10px; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; }
+  .tag.user { background: var(--meadow); color: var(--ink); }
+  .tag.ai { background: var(--ink); color: #ffffff; }
+  .tag.error { background: var(--red-bg); color: var(--red-tx); }
+
   /* Thought Box */
-  .thought-box { width: 100%; margin-bottom: 8px; background: rgba(0,0,0,0.02); border-left: 3px solid var(--muted); border-radius: 4px; font-size: 13px; }
-  .thought-box summary { padding: 6px 10px; color: var(--muted); cursor: pointer; font-weight: 600; font-family: 'Share Tech Mono', monospace; font-size: 11px; outline: none; }
-  .thought-content { padding: 8px 10px; color: #555555; border-top: 1px dashed var(--border); font-style: italic; white-space: pre-wrap; }
+  .thought-box { width: 100%; margin-bottom: 8px; background: rgba(0,0,0,0.02); border-left: 3px solid var(--slate); border-radius: 4px; font-size: 13px; }
+  .thought-box summary { padding: 6px 10px; color: var(--slate); cursor: pointer; font-weight: 600; font-family: 'Inter', sans-serif; font-size: 11px; outline: none; }
+  .thought-content { padding: 8px 10px; color: #555555; border-top: 1px dashed var(--border); font-style: italic; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
 
   .msg-content { font-size: 14.5px; word-break: break-word; font-family: 'Inter', sans-serif; }
   .msg-content p { margin-bottom: 8px; }
@@ -283,21 +300,20 @@
   .msg-content pre code { color: #A8FFB2; background: none; padding: 0; }
   
   .msg-actions { display: flex; gap: 6px; margin-top: 8px; }
-  .action-btn { font-family: 'Share Tech Mono', monospace; font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); padding: 2px 6px; cursor: pointer; }
+  .action-btn { font-family: 'Inter', sans-serif; font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); padding: 2px 6px; cursor: pointer; }
 
   #empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 0.6rem; color: var(--muted); text-align: center; padding: 2rem; background: var(--canvas); }
 
   .footer-container { padding: 0.5rem 0.75rem env(safe-area-inset-bottom, 0.5rem); background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; width: 100%; }
   footer { display: flex; gap: 0.5rem; align-items: flex-end; width: 100%; }
 
-  /* Input area font-size ditingkatkan ke 16px untuk menonaktifkan auto-zoom brutal di IOS/Chrome Mobile */
   textarea#input { 
     flex: 1; 
     background: transparent; 
     border: none; 
     color: var(--text); 
     padding: 0.5rem 0.5rem 0; 
-    font-size: 16px; 
+    font-size: 16px; /* Matikan paksa zoom browser mobile */
     font-family: 'Inter', sans-serif; 
     resize: none; 
     min-height: 40px; 
@@ -310,13 +326,13 @@
   button#send:disabled { opacity: 0.25; cursor: not-allowed; }
 
   #upload-btn { height: 32px; width: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(19,14,48,0.05); border: none; color: var(--ink); cursor: pointer; font-size: 1.1rem; }
-  #effort-select { background: rgba(19,14,48,0.04); border: none; border-radius: 16px; color: var(--ink); font-size: 0.78rem; padding: 0.35rem 0.75rem; font-weight: 500; outline: none; cursor: pointer; font-family: inherit; }
+  #effort-select { background: rgba(19,14,48,0.04); border: none; border-radius: 16px; color: var(--ink); font-size: 0.78rem; padding: 0.35rem 0.75rem; font-weight: 500; outline: none; cursor: pointer; font-family: 'Inter', sans-serif; }
 
   .progress-container { width: 100%; height: 3px; background: var(--border); position: relative; overflow: hidden; display: none; flex-shrink: 0; }
   .progress-bar { height: 100%; width: 0%; background: var(--ink); transition: width 0.2s cubic-bezier(0.1, 0.8, 0.3, 1); }
 
   #compare-tabs { display: none; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; width: 100%; }
-  .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; font-family: 'Inter', sans-serif; font-size: 0.75rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
   .tab-btn.active { color: var(--text); border-bottom-color: var(--text); font-weight: bold; }
 
   @media (min-width: 768px) {
@@ -347,7 +363,7 @@
 <body>
 
 <div id="setup">
-  <div style="font-family: 'Share Tech Mono', monospace; font-size: 1.3rem; font-weight: 700;">K'sRouter</div>
+  <div style="font-family: 'Hedvig Letters Serif', serif; font-size: 1.5rem; font-weight: 700; color: var(--ink);">K's Router</div>
   <p style="color: var(--muted); font-size: 0.85rem;">Masukkan bearer token untuk mulai.</p>
   <input id="token-input" type="password" placeholder="token..." autocomplete="off" />
   <p id="setup-error" style="color: var(--red-tx); font-size: 0.8rem; display: none;">Token salah, coba lagi.</p>
@@ -377,7 +393,7 @@
     <header>
       <button class="icon-btn" id="menu-toggle-btn" style="display: none; font-size: 1.1rem; padding: 0.2rem 0.6rem;">☰</button>
       <button class="icon-btn" onclick="window.location.href='dashboard.html'" title="Ke Dashboard">←</button>
-      <span class="logo">K'sRouter</span>
+      <span class="logo">K's Router</span>
       <span id="progress-pct" class="pct-counter">0%</span>
       <div class="spacer"></div>
       <select id="provider-select">
@@ -567,6 +583,19 @@
     const div = document.createElement('div');
     div.className = 'msg';
 
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    const tag = document.createElement('span');
+    tag.className = 'tag ' + role;
+    tag.textContent = role === 'user' ? 'you' : 'ai';
+    meta.appendChild(tag);
+    
+    const ts = document.createElement('span');
+    ts.style = "font-size:10px; color:var(--muted); margin-left:5px;";
+    ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    meta.appendChild(ts);
+    wrapper.appendChild(meta);
+
     let finalContent = content;
     if (role === 'ai' && content && content.includes('<think>') && content.includes('</think>')) {
       const parts = content.split('</think>');
@@ -693,11 +722,11 @@
   }
   inputEl.addEventListener('input', updateSendButtonState);
 
+  /* FIXED & CLEANED UP BUBBLE GENERATOR LOGIC */
   function addMsg(role, content, opts = {}) {
     const targetContainer = opts.target || messagesEl;
     if (targetContainer === messagesEl) emptyEl.style.display = 'none';
 
-    // Bungkus pake msg-wrapper biar posisi bubble-nya bener (kanan/kiri)
     const wrapper = document.createElement('div');
     wrapper.className = `msg-wrapper ${role === 'user' ? 'user-align' : 'ai-align'}`;
 
@@ -727,7 +756,6 @@
     ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     meta.appendChild(ts);
     
-    // Taruh meta di luar bubble biar rapi kayak layout baru lo
     wrapper.appendChild(meta);
 
     if (opts.fileName) {
@@ -737,26 +765,21 @@
       div.appendChild(fileBox);
     }
 
-    // --- LOGIKA UTAMA EKSTRAKSI THOUGHT BOX ---
     let finalContent = content || '';
     let thoughtText = '';
 
-    // Cek apakah ada properti reasoning_content dari API
     if (opts.reasoning) {
       thoughtText = opts.reasoning.trim();
-    } 
-    // Atau cek apakah teksnya dibungkus format manual <think>...</think>
-    else if (finalContent.includes('<think>') && finalContent.includes('</think>')) {
+    } else if (finalContent.includes('<think>') && finalContent.includes('</think>')) {
       const parts = finalContent.split('</think>');
       thoughtText = parts[0].replace('<think>', '').trim();
       finalContent = parts[1] ? parts[1].trim() : '';
     }
 
-    // Jika ada teks pemikiran/reasoning, buatin komponen detail dropdown-nya
     if (thoughtText) {
       const details = document.createElement('details');
       details.className = 'thought-box';
-      details.open = true; // Otomatis kebuka pas baru masuk biar user tau AI lagi mikir apa
+      details.open = true;
       
       const summary = document.createElement('summary');
       summary.textContent = '💭 Thinking Process (click to toggle)';
@@ -789,13 +812,7 @@
       };
       actions.appendChild(copyBtn);
       div.appendChild(actions);
-    }
-
-    wrapper.appendChild(div);
-    targetContainer.appendChild(wrapper);
-    targetContainer.scrollTop = targetContainer.scrollHeight;
-    return wrapper;
-  } else if (role === 'user') {
+    } else if (role === 'user') {
       const editBtn = document.createElement('button');
       editBtn.className = 'action-btn';
       editBtn.textContent = 'edit';
@@ -803,13 +820,14 @@
         inputEl.value = content;
         inputEl.focus();
         const nodes = Array.from(targetContainer.children);
-        const idx = nodes.indexOf(div);
+        const idx = nodes.indexOf(wrapper);
         if (idx !== -1) {
           while (targetContainer.children.length > idx) {
             targetContainer.removeChild(targetContainer.lastChild);
           }
           if(sessions[currentSessionId]) {
             sessions[currentSessionId].history = sessions[currentSessionId].history.slice(0, idx);
+            saveSessionsToStorage();
           }
         }
         updateSendButtonState();
@@ -818,9 +836,10 @@
       div.appendChild(actions);
     }
 
-    targetContainer.appendChild(div);
+    wrapper.appendChild(div);
+    targetContainer.appendChild(wrapper);
     targetContainer.scrollTop = targetContainer.scrollHeight;
-    return div;
+    return wrapper;
   }
 
   async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
@@ -840,13 +859,10 @@
       if (!res.ok) { addMsg('error', 'Error ' + res.status + ' — provider gagal.', { target: targetContainer }); return null; }
 
       const data = await res.json();
-      
-      // Ambil teks utama dan teks reasoning dari response API
       const messageObj = data.choices?.[0]?.message || {};
       const reply = messageObj.content || '';
-      const reasoning = messageObj.reasoning_content || ''; // Properti khusus DeepSeek R1 / Reasoning model
+      const reasoning = messageObj.reasoning_content || '';
 
-      // Kirim data ke addMsg yang baru dengan opsi reasoning terpisah
       addMsg('ai', reply, { 
         provider: data._provider || provider, 
         target: targetContainer,
@@ -857,15 +873,13 @@
         document.getElementById(labelPrefix).textContent = (data._provider || provider).toUpperCase();
       }
       
-      // Kembalikan format gabungan biar history internal browser tetep kesimpen utuh beserta proses mikirnya
       return reasoning ? `<think>${reasoning}</think>\n${reply}` : reply;
-      
     } catch (err) {
       addMsg('error', 'Request failed: ' + err.message, { target: targetContainer }); 
       return null;
     }
   }
-  
+
   async function send() {
     let text = inputEl.value.trim();
     if (!text && !attachedFileContent) return;
