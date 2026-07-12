@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K's Router</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+  :root {
+    --canvas: #FBFBFA;
+    --surface: #FFFFFF;
+    --border: #EAEAEA;
+    --text: #111111;
+    --muted: #787774;
+
+    --pale-green-bg: #EDF3EC;
+    --pale-green-text: #346538;
+    --pale-blue-bg: #E1F3FE;
+    --pale-blue-text: #1F6C9F;
+    --pale-red-bg: #FDEBEC;
+    --pale-red-text: #9F2F2D;
+    --pale-yellow-bg: #FBF3DB;
+    --pale-yellow-text: #956400;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--canvas);
+    color: var(--text);
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .logo {
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .signal {
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    background: var(--canvas);
+    border: 1px solid var(--border);
+  }
+  .signal-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .signal.on .signal-dot { background: var(--pale-green-text); }
+  .spacer { flex: 1; }
+
+  select#provider-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.78rem;
+    padding: 0.35rem 0.5rem;
+    outline: none;
+    cursor: pointer;
+    max-width: 140px;
+    font-family: inherit;
+  }
+  button.icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.3rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-family: 'SF Mono', monospace;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  button.icon-btn:hover { color: var(--text); border-color: #d5d5d3; }
+
+  /* Comparison Mobile Tabs Container */
+  #compare-tabs {
+    display: none;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: none;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+    font-weight: bold;
+  }
+
+  /* Main Workspace for Messages */
+  #workspace {
+    flex: 1;
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Messages View */
+  .chat-view {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* View management for layout splitting */
+  #view-b {
+    display: none;
+    border-left: 1px solid var(--border);
+  }
+
+  #messages, #messages-b {
+    flex: 1;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .msg {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .msg-meta {
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tag {
+    font-family: 'SF Mono', 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+  }
+  .tag.user { background: var(--pale-blue-bg); color: var(--pale-blue-text); }
+  .tag.ai { background: var(--pale-green-bg); color: var(--pale-green-text); }
+  .tag.error { background: var(--pale-red-bg); color: var(--pale-red-text); }
+  .tag.search { background: var(--pale-yellow-bg); color: var(--pale-yellow-text); }
+
+  .msg-ts { color: var(--muted); font-size: 0.65rem; text-transform: none; letter-spacing: 0; }
+  .msg-provider { color: var(--muted); font-size: 0.65rem; text-transform: none; letter-spacing: 0; }
+
+  /* Markdown content */
+  .msg-content { color: var(--text); font-size: 0.92rem; }
+  .msg-content p { margin-bottom: 0.55rem; }
+  .msg-content p:last-child { margin-bottom: 0; }
+  .msg-content code {
+    font-family: 'SF Mono', monospace;
+    font-size: 0.85em;
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    color: var(--pale-yellow-text);
+  }
+  .msg-content pre {
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    position: relative;
+  }
+  .msg-content pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--pale-green-text);
+    font-size: 0.82em;
+  }
+  .msg-content strong { color: var(--text); font-weight: 700; }
+  .msg-content ul, .msg-content ol { padding-left: 1.25rem; margin-bottom: 0.55rem; }
+  .msg-content li { margin-bottom: 0.2rem; }
+  .msg-content a { color: var(--pale-blue-text); }
+  .msg-content h1, .msg-content h2, .msg-content h3 {
+    color: var(--text);
+    margin: 0.75rem 0 0.4rem;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  /* thinking dots */
+  .dots span {
+    animation: blink 1.2s infinite;
+    opacity: 0;
+    color: var(--muted);
+  }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
+  /* actions */
+  .msg-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+  .action-btn {
+    font-family: 'SF Mono', monospace;
+    font-size: 0.66rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    padding: 0.2rem 0.55rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .action-btn:hover { color: var(--text); border-color: #d5d5d3; }
+  .action-btn.dl-btn { color: var(--pale-blue-text); border-color: var(--pale-blue-bg); }
+
+  /* search */
+  .search-answer { margin-bottom: 0.6rem; color: var(--text); font-size: 0.92rem; }
+  .search-results { display: flex; flex-direction: column; gap: 0.35rem; }
+  .search-link {
+    font-size: 0.8rem;
+    color: var(--pale-blue-text);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    border-bottom: 1px solid transparent;
+  }
+  .search-link:hover { border-bottom-color: var(--pale-blue-text); }
+
+  /* empty state */
+  #empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 0.6rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 2rem;
+  }
+  #empty .mark {
+    font-family: 'SF Mono', monospace;
+    font-size: 1.6rem;
+    color: var(--text);
+  }
+  #empty p { font-size: 0.85rem; line-height: 1.8; }
+  #empty code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-size: 0.85em;
+    color: var(--pale-yellow-text);
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* footer */
+  footer {
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
+    flex-shrink: 0;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  textarea#input {
+    flex: 1;
+    background: var(--canvas);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: none;
+    height: 42px;
+    max-height: 140px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea#input:focus { border-color: #c7c7c4; }
+  textarea#input::placeholder { color: var(--muted); }
+  button#send {
+    background: #111111;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    padding: 0 1.1rem;
+    height: 42px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  button#send:hover { background: #333333; }
+  button#send:active { transform: scale(0.98); }
+  button#send:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  #upload-btn { flex-shrink: 0; }
+
+  /* setup overlay */
+  #setup {
+    position: fixed;
+    inset: 0;
+    background: var(--canvas);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+    z-index: 100;
+  }
+  #setup.hidden { display: none; }
+  #setup .logo-big { font-family: 'SF Mono', monospace; font-size: 1.3rem; font-weight: 700; color: var(--text); }
+  #setup p { color: var(--muted); font-size: 0.85rem; }
+  #token-input {
+    width: 100%;
+    max-width: 320px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+    font-family: 'SF Mono', monospace;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #token-input:focus { border-color: #c7c7c4; }
+  #token-input.err { border-color: var(--pale-red-text); }
+  #setup-error { color: var(--pale-red-text); font-size: 0.8rem; display: none; }
+  #save-token {
+    background: #111111;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7rem 2rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.88rem;
+  }
+  #save-token:hover { background: #333333; }
+
+  /* Responsive styling for desktop vs mobile layout */
+  @media (min-width: 768px) {
+    #compare-tabs { display: none !important; }
+    .chat-view { display: flex !important; width: 50%; }
+  }
+  @media (max-width: 767px) {
+    #view-b.active-tab { display: flex !important; width: 100%; }
+    #view-a.active-tab { display: flex !important; width: 100%; }
+    #view-a:not(.active-tab) { display: none !important; }
+    #view-b:not(.active-tab) { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <div class="logo-big">K'sRouter</div>
+  <p>Masukkan bearer token untuk mulai.</p>
+  <input id="token-input" type="password" placeholder="token..." autocomplete="off" />
+  <p id="setup-error">Token salah, coba lagi.</p>
+  <button id="save-token">Masuk</button>
+</div>
+
+<header>
+  <span class="logo">K'sRouter</span>
+  <div class="signal" id="signal">
+    <div class="signal-dot"></div>
+    <span id="provider-label">idle</span>
+  </div>
+  <div class="spacer"></div>
+  <select id="provider-select">
+    <option value="">Auto</option>
+    <option value="compare">⚔️ Compare Mode</option>
+    <option value="groq">Llama 3.3</option>
+    <option value="github_gpt">GPT-4o mini</option>
+    <option value="nvidia_qwen">Qwen 3.5</option>
+    <option value="nvidia_deepseek">DeepSeek V4 Pro</option>
+    <option value="nvidia_z_ai">GLM 5.2</option>
+    <option value="kilo">Haiku 4.5</option>
+    <option value="cerebras">Gemma 4</option>
+    <option value="github_mistral">Mistral small</option>
+    <option value="google_gemini">Gemini 2.5 Flah</option>
+  </select>
+  <button class="icon-btn" id="clear-btn" title="Clear chat">clear</button>
+</header>
+
+<div id="compare-tabs">
+  <button class="tab-btn active" id="tab-a-btn">Model A</button>
+  <button class="tab-btn" id="tab-b-btn">Model B</button>
+</div>
+
+<div id="workspace">
+  <!-- View A (Default & Comparison Side A) -->
+  <div id="view-a" class="chat-view active-tab">
+    <div id="messages">
+      <div id="empty">
+        <div class="mark">/</div>
+        <p>
+          Ketik pesan untuk mulai.<br>
+          Gunakan <code>/search query</code> untuk real-time data.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- View B (Comparison Side B) -->
+  <div id="view-b" class="chat-view">
+    <div id="messages-b"></div>
+  </div>
+</div>
+
+<footer>
+ 
+  <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
+  <button class="icon-btn" id="upload-btn" type="button" title="Inject file ke prompt">📎</button>
+  
+  <textarea id="input" placeholder="Pesan... atau /search query" rows="1"></textarea>
+  <button id="send">Kirim</button>
+</footer>
+
+<select id="provider-select">
+  <option value="auto_router">✨ Auto Smart Router (Rekomendasi)</option>
+  <option value="groq">Groq (Llama)</option>
+  <option value="nvidia_deepseek">NVIDIA (DeepSeek)</option>
+  <option value="nvidia_nemotron">NVIDIA (Nemotron)</option>
+  </select>
+
+  
+<script>
+  const CHAT_ENDPOINT = '/api/chat'
+  const SEARCH_ENDPOINT = '/api/search'
+
+  let TOKEN = localStorage.getItem('kr_token') || ''
+  let history = []
+
+  marked.setOptions({ breaks: true, gfm: true })
+
+  const setupEl = document.getElementById('setup')
+  const tokenInput = document.getElementById('token-input')
+  const setupError = document.getElementById('setup-error')
+  const messagesEl = document.getElementById('messages')
+  const messagesBEl = document.getElementById('messages-b')
+  const emptyEl = document.getElementById('empty')
+  const inputEl = document.getElementById('input')
+  const sendBtn = document.getElementById('send')
+  const providerSelect = document.getElementById('provider-select')
+  const signalEl = document.getElementById('signal')
+  const providerLabel = document.getElementById('provider-label')
+  const fileInjector = document.getElementById('file-injector')
+  const uploadBtn = document.getElementById('upload-btn')
+  
+  const compareTabs = document.getElementById('compare-tabs')
+  const viewA = document.getElementById('view-a')
+  const viewb = document.getElementById('view-b')
+  const tabABtn = document.getElementById('tab-a-btn')
+  const tabBBtn = document.getElementById('tab-b-btn')
+
+  if (TOKEN) setupEl.classList.add('hidden')
+
+  // UI Layout Handler untuk Compare Mode
+  providerSelect.onchange = () => {
+    if (providerSelect.value === 'compare') {
+      viewb.style.display = 'flex'
+      if (window.innerWidth < 768) {
+        compareTabs.style.display = 'flex'
+      }
+    } else {
+      viewb.style.display = 'none'
+      compareTabs.style.display = 'none'
+      viewA.classList.add('active-tab')
+      viewb.classList.remove('active-tab')
+    }
+  }
+
+  // Handle Switch Tab di Mobile
+  tabABtn.onclick = () => {
+    tabABtn.classList.add('active')
+    tabBBtn.classList.remove('active')
+    viewA.classList.add('active-tab')
+    viewb.classList.remove('active-tab')
+  }
+
+  tabBBtn.onclick = () => {
+    tabBBtn.classList.add('active')
+    tabABtn.classList.remove('active')
+    viewb.classList.add('active-tab')
+    viewA.classList.remove('active-tab')
+  }
+
+  document.getElementById('save-token').onclick = async () => {
+    const val = tokenInput.value.trim()
+    if (!val) return
+    try {
+      const test = await fetch(CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + val },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
+      })
+      if (test.status === 401) {
+        tokenInput.classList.add('err')
+        setupError.style.display = 'block'
+        return
+      }
+    } catch (_) {}
+    TOKEN = val
+    localStorage.setItem('kr_token', val)
+    setupEl.classList.add('hidden')
+  }
+
+  document.getElementById('clear-btn').onclick = () => {
+    history = []
+    messagesEl.innerHTML = ''
+    messagesBEl.innerHTML = ''
+    messagesEl.appendChild(emptyEl)
+    emptyEl.style.display = 'flex'
+    setSignal('idle')
+  }
+
+  uploadBtn.onclick = () => { fileInjector.click() }
+
+  fileInjector.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      addMsg('error', 'File kegedean, bro! Maksimal 2MB.', { target: messagesEl })
+      fileInjector.value = ''
+      return
+    }
+    try {
+      const content = await file.text()
+      const fileContent = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${file.name}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya dan berikan respon yang bisa saya paste langsung ke file (kode yang sudah diperbaiki, dan penjelasan singkat).`
+      inputEl.value = fileContent
+      inputEl.style.height = '42px'
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
+      inputEl.focus()
+      fileInjector.value = ''
+    } catch (err) {
+      addMsg('error', 'Failed to read file: ' + err.message, { target: messagesEl })
+      fileInjector.value = ''
+    }
+  })
+
+  function setSignal(state, label) {
+    if (state === 'routing') {
+      signalEl.classList.add('on')
+      providerLabel.textContent = 'routing...'
+    } else if (state === 'provider') {
+      signalEl.classList.add('on')
+      providerLabel.textContent = label
+    } else {
+      signalEl.classList.remove('on')
+      providerLabel.textContent = 'idle'
+    }
+  }
+
+  // Fungsi Deteksi Otomatis Code Block untuk Download File
+  function attachDownloadButtons(container, rawText) {
+    // Cari semua elemen <pre> yang di-generate oleh marked
+    const preBlocks = container.querySelectorAll('pre');
+    
+    // Gunakan regex untuk mengambil isi kode mentah berdasarkan urutan penemuan block
+    const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+    let match;
+    let idx = 0;
+
+    while ((match = codeBlockRegex.exec(rawText)) !== null) {
+      const lang = match[1] || 'txt';
+      const rawCode = match[2];
+      const targetPre = preBlocks[idx];
+
+      if (targetPre) {
+        // Deteksi ekstensi file berdasarkan bahasa code block
+        let ext = '.' + lang;
+        if (lang === 'js' || lang === 'javascript') ext = '.js';
+        if (lang === 'py' || lang === 'python') ext = '.py';
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'msg-actions';
+
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'action-btn dl-btn';
+        dlBtn.textContent = `💾 download code${ext}`;
+        
+        dlBtn.onclick = () => {
+          const blob = new Blob([rawCode], { type: 'text/plain' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `output_code_${Date.now()}${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+
+        actionsDiv.appendChild(dlBtn);
+        targetPre.parentNode.insertBefore(actionsDiv, targetPre.nextSibling);
+      }
+      idx++;
+    }
+  }
+
+  function addMsg(role, content, opts = {}) {
+    const targetContainer = opts.target || messagesEl;
+    if (targetContainer === messagesEl) emptyEl.style.display = 'none';
+
+    const div = document.createElement('div')
+    div.className = 'msg'
+
+    const meta = document.createElement('div')
+    meta.className = 'msg-meta'
+
+    const tag = document.createElement('span')
+    tag.className = 'tag ' + role
+    tag.textContent = role === 'user' ? 'you' : role === 'error' ? 'error' : role === 'search' ? 'search' : 'ai'
+    meta.appendChild(tag)
+
+    if (opts.provider) {
+      const pSpan = document.createElement('span')
+      pSpan.className = 'msg-provider'
+      pSpan.textContent = opts.provider
+      meta.appendChild(pSpan)
+    }
+
+    const ts = document.createElement('span')
+    ts.className = 'msg-ts'
+    ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    meta.appendChild(ts)
+    div.appendChild(meta)
+
+    const contentDiv = document.createElement('div')
+    contentDiv.className = 'msg-content'
+
+    if (opts.thinking) {
+      contentDiv.innerHTML = '<span class="dots"><span>.</span><span>.</span><span>.</span></span>'
+    } else if (role === 'search') {
+      if (content.answer) {
+        const ans = document.createElement('div')
+        ans.className = 'search-answer'
+        ans.textContent = content.answer
+        contentDiv.appendChild(ans)
+      }
+      const links = document.createElement('div')
+      links.className = 'search-results'
+      content.results.forEach(r => {
+        const a = document.createElement('a')
+        a.className = 'search-link'
+        a.href = r.url
+        a.target = '_blank'
+        a.textContent = r.title
+        links.appendChild(a)
+      })
+      contentDiv.appendChild(links)
+    } else {
+      contentDiv.innerHTML = marked.parse(content)
+    }
+
+    div.appendChild(contentDiv)
+
+    if (role === 'ai' && !opts.thinking) {
+      const actions = document.createElement('div')
+      actions.className = 'msg-actions'
+      const copyBtn = document.createElement('button')
+      copyBtn.className = 'action-btn'
+      copyBtn.textContent = 'copy'
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(content)
+        copyBtn.textContent = 'copied'
+        setTimeout(() => { copyBtn.textContent = 'copy' }, 1500)
+      }
+      actions.appendChild(copyBtn)
+      div.appendChild(actions)
+
+      // Fitur Otomatis Deteksi Code Block untuk Download
+      if (content.includes('```')) {
+        setTimeout(() => attachDownloadButtons(contentDiv, content), 50);
+      }
+    }
+
+    targetContainer.appendChild(div)
+    targetContainer.scrollTop = targetContainer.scrollHeight
+    return div
+  }
+
+  async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
+    const thinking = addMsg('ai', '', { thinking: true, target: targetContainer })
+    try {
+      const payload = { ...bodyPayload };
+      if (provider) payload.provider = provider;
+
+      const res = await fetch(CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.status === 401) {
+        thinking.remove()
+        addMsg('error', 'Unauthorized — token salah.', { target: targetContainer })
+        return null;
+      }
+      if (!res.ok) {
+        thinking.remove()
+        addMsg('error', 'Error ' + res.status + ' — provider gagal.', { target: targetContainer })
+        return null;
+      }
+
+      const data = await res.json()
+      const reply = data.choices?.[0]?.message?.content || 'No response.'
+      thinking.remove()
+      
+      addMsg('ai', reply, { provider: data._provider, target: targetContainer })
+      if (labelPrefix) {
+        document.getElementById(labelPrefix).textContent = data._provider.toUpperCase();
+      }
+      return reply;
+    } catch (err) {
+      thinking.remove()
+      addMsg('error', 'Request failed: ' + err.message, { target: targetContainer })
+      return null;
+    }
+  }
+
+  async function doSearch(query) {
+    addMsg('user', '/search ' + query, { target: messagesEl })
+    const thinking = addMsg('search', '', { thinking: true, target: messagesEl })
+    setSignal('routing')
+    try {
+      const res = await fetch(SEARCH_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify({ query })
+      })
+      const data = await res.json()
+      thinking.remove()
+      addMsg('search', data, { target: messagesEl })
+
+      const context = 'Use ONLY the following search results to answer. Do not use prior knowledge.\n\n' +
+        'Search results for "' + query + '":\n\n' +
+        (data.answer ? 'Summary: ' + data.answer + '\n\n' : '') +
+        data.results.map((r, i) => (i+1) + '. ' + r.title + '\n' + r.content).join('\n\n') +
+        '\n\nBased on the above, answer: ' + query
+
+      history.push({ role: 'user', content: context })
+      sendBtn.disabled = true
+      
+      const reply = await fetchModelResponse(providerSelect.value, { messages: history }, messagesEl)
+      if (reply) history.push({ role: 'assistant', content: reply })
+
+    } catch (err) {
+      thinking.remove()
+      addMsg('error', 'Search failed: ' + err.message, { target: messagesEl })
+    } finally {
+      sendBtn.disabled = false
+      setSignal('idle')
+    }
+  }
+
+  async function send() {
+    const text = inputEl.value.trim()
+    if (!text) return
+
+    inputEl.value = ''
+    inputEl.style.height = '42px'
+
+    if (text.startsWith('/search ')) {
+      await doSearch(text.slice(8).trim())
+      return
+    }
+
+    sendBtn.disabled = true
+    history.push({ role: 'user', content: text })
+
+    const mode = providerSelect.value
+
+    if (mode === 'compare') {
+      // Jalankan Mode Pembanding: Tembak dua provider andalan sekaligus
+      addMsg('user', text, { target: messagesEl })
+      addMsg('user', text, { target: messagesBEl })
+      
+      tabABtn.textContent = "NVIDIA DeepSeek";
+      tabBBtn.textContent = "FlatKey GPT";
+
+      setSignal('routing')
+
+      // Request berjalan paralel secara serentak
+      const [replyA, replyB] = await Promise.all([
+        fetchModelResponse('nvidia_deepseek', { messages: history }, messagesEl, 'tab-a-btn'),
+        fetchModelResponse('flatkey', { messages: history }, messagesBEl, 'tab-b-btn')
+      ]);
+
+      // Ambil respon salah satu untuk kelanjutan chain history
+      if (replyA) history.push({ role: 'assistant', content: replyA })
+      setSignal('idle')
+      sendBtn.disabled = false
+    } else {
+      // Mode Normal (Single Provider / Auto Router)
+      addMsg('user', text, { target: messagesEl })
+      setSignal('routing')
+      const reply = await fetchModelResponse(mode, { messages: history }, messagesEl)
+      if (reply) {
+        history.push({ role: 'assistant', content: reply })
+        setSignal('provider', mode || 'auto')
+      } else {
+        setSignal('idle')
+      }
+      sendBtn.disabled = false
+    }
+  }
+
+  sendBtn.onclick = send
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+  })
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = '42px'
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'
+  })
+</script>
+</body>
+</html>

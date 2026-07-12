@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — K's Router</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif:opsz@12..24&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Ditto tokens ── */
+:root {
+  --canvas:      #f9fbf2;
+  --meadow:      #eff2e5;
+  --ink:         #130e30;
+  --ink-hover:   #1e1548;
+  --yellow:      #ffe228;
+  --slate:       #5f5c6e;
+  --border:      rgba(19, 14, 48, 0.10);
+
+  /* content area (minimalist-ui spirit) */
+  --surface:     #ffffff;
+  --border-ui:   #eaeaea;
+  --text:        #111111;
+  --text-muted:  #787774;
+
+  /* semantic */
+  --green-bg:    #edf3ec; --green-tx: #346538;
+  --red-bg:      #fdebec; --red-tx:   #9f2f2d;
+  --yellow-bg:   #fbf3db; --yellow-tx:#956400;
+  --blue-bg:     #e1f3fe; --blue-tx:  #1f6c9f;
+
+  --sidebar-w:   220px;
+  --radius-pill: 1440px;
+  --radius-card: 12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  background: var(--canvas);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.14px;
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--meadow);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 12px;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 100;
+  gap: 32px;
+}
+
+.brand {
+  padding: 0 12px;
+}
+
+.brand-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: 4px;
+}
+
+.brand-name {
+  font-family: 'Hedvig Letters Serif', ui-serif, Georgia, serif;
+  font-size: 20px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.nav-item:hover { background: rgba(19, 14, 48, 0.06); }
+
+.nav-item.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.nav-item svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-footer {
+  padding: 0 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.sidebar-footer a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--slate);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  padding: 9px 12px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-footer a:hover { background: rgba(19,14,48,0.06); color: var(--ink); }
+
+/* ── Main content ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 40px 48px;
+  max-width: calc(100% - var(--sidebar-w));
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-family: 'Hedvig Letters Serif', ui-serif, Georgia, serif;
+  font-size: 32px;
+  color: var(--ink);
+  letter-spacing: -0.32px;
+  line-height: 1.15;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* ── Stat cards ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border-ui);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: rise 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+@keyframes rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.stat-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* ── Section ── */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border-ui);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: rise 0.5s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-ui);
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.15px;
+}
+
+.section-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Table ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border-ui);
+  background: #fafafa;
+}
+
+td {
+  padding: 13px 24px;
+  border-bottom: 1px solid var(--border-ui);
+  font-size: 13px;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.badge-ok      { background: var(--green-bg);  color: var(--green-tx); }
+.badge-fail    { background: var(--red-bg);    color: var(--red-tx); }
+.badge-low     { background: var(--yellow-bg); color: var(--yellow-tx); }
+.badge-medium  { background: var(--blue-bg);   color: var(--blue-tx); }
+.badge-high    { background: var(--red-bg);    color: var(--red-tx); }
+
+/* ── Provider chips ── */
+.provider-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.provider-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0.3;
+  flex-shrink: 0;
+}
+
+/* ── Empty / loading ── */
+.table-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── Bottom nav (mobile) ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--meadow);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+  z-index: 200;
+}
+
+.bottom-nav-items {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-decoration: none;
+  color: var(--slate);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 12px;
+  transition: color 0.15s;
+  min-width: 56px;
+}
+
+.bottom-nav-item.active {
+  color: var(--ink);
+}
+
+.bottom-nav-item.active svg { opacity: 1; }
+.bottom-nav-item svg { opacity: 0.5; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .bottom-nav { display: block; }
+  .main {
+    margin-left: 0;
+    max-width: 100%;
+    padding: 24px 16px 88px;
+  }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-value { font-size: 22px; }
+  th, td { padding: 10px 16px; }
+  .page-title { font-size: 24px; }
+}
+
+@media (max-width: 420px) {
+  .stats-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-label">AI Router</div>
+      <div class="brand-name">K's Router</div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Menu</div>
+
+      <a href="dashboard.html" class="nav-item active">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a href="chat.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Chat
+      </a>
+
+      <a href="providers.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+        Providers
+      </a>
+
+      <a href="analytics.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Analytics
+      </a>
+
+      <a href="users.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Users
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="settings.html">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Settings
+      </a>
+    </div>
+  </nav>
+
+  <nav class="bottom-nav">
+    <div class="bottom-nav-items">
+      <a href="dashboard.html" class="bottom-nav-item active">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Dashboard
+      </a>
+      <a href="chat.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        Chat
+      </a>
+      <a href="providers.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+        Providers
+      </a>
+      <a href="analytics.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Analytics
+      </a>
+      <a href="settings.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Settings
+      </a>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle" id="rangeLabel">Memuat data hari ini…</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" style="animation-delay:0ms">
+        <div class="stat-label">Total Requests</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub">24 jam terakhir</div>
+      </div>
+      <div class="stat-card" style="animation-delay:60ms">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value" id="statSuccess">—</div>
+        <div class="stat-sub">dari total request</div>
+      </div>
+      <div class="stat-card" style="animation-delay:120ms">
+        <div class="stat-label">Avg Latency</div>
+        <div class="stat-value" id="statLatency">—</div>
+        <div class="stat-sub">ms per request</div>
+      </div>
+      <div class="stat-card" style="animation-delay:180ms">
+        <div class="stat-label">Active Providers</div>
+        <div class="stat-value" id="statProviders">—</div>
+        <div class="stat-sub">berhasil merespons</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Recent Activity</span>
+        <span class="section-meta" id="tableCount">—</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Effort</th>
+              <th>Tokens In</th>
+              <th>Tokens Out</th>
+              <th>Latency</th>
+              <th>Status</th>
+              <th>Waktu</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="7" class="table-empty">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ── PENTING: Ganti nilai placeholder di bawah ini dengan kredensial asli Supabase lo ──
+  // Salin langsung dari menu: Supabase Project > Settings > API
+  const SUPABASE_URL  = 'YOUR_SUPABASE_URL'   // Contoh format: https://xyzabcdefghijklmno.supabase.co
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY'
+
+  const headers = {
+    'apikey': SUPABASE_ANON,
+    'Authorization': 'Bearer ' + SUPABASE_ANON
+  }
+
+  function since24h() {
+    const d = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    return d.toISOString()
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return '—'
+    const d = new Date(iso)
+    return d.toLocaleString('id-ID', {
+      month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    })
+  }
+
+  function effortBadge(effort) {
+    const cls = { low: 'badge-low', medium: 'badge-medium', high: 'badge-high' }
+    return `<span class="badge ${cls[effort] || 'badge-medium'}">${effort || 'medium'}</span>`
+  }
+
+  async function loadDashboard() {
+    // Early Exit Protection: Cegah crash/error jika user belum mengisi kredensial Supabase mereka
+    if (SUPABASE_URL === 'https://zxltocarwslslyylexdt.supabase.co/rest/v1/' || SUPABASE_ANON === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4bHRvY2Fyd3Nsc2x5eWxleGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTc3NDcsImV4cCI6MjA5OTM3Mzc0N30.JKYG9gF-vOaGwWkLJuxA8-b3xLQ4Itc0BjK9t89CCfc') {
+      document.getElementById('tableBody').innerHTML = 
+        `<tr><td colspan="7" class="table-empty">⚠️ Kredensial Supabase belum diisi. Silakan buka file ini di teks editor lalu ganti nilai variabel SUPABASE_URL dan SUPABASE_ANON dengan key proyek asli lo.</td></tr>`;
+      document.getElementById('rangeLabel').textContent = 'Konfigurasi database diperlukan.';
+      return;
+    }
+
+    try {
+      const cutoff = since24h()
+
+      // Fetch 24h logs untuk stats
+      const statsRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/usage_logs?select=success,latency_ms,provider&created_at=gte.${cutoff}&limit=1000`,
+        { headers }
+      )
+      const stats = await statsRes.json()
+
+      const total    = stats.length
+      const succeded = stats.filter(r => r.success).length
+      const rate     = total ? Math.round((succeded / total) * 100) : 0
+      const latencies = stats.filter(r => r.latency_ms).map(r => r.latency_ms)
+      const avgLat   = latencies.length ? Math.round(latencies.reduce((a,b) => a+b, 0) / latencies.length) : 0
+      const activeP  = new Set(stats.filter(r => r.success).map(r => r.provider)).size
+
+      document.getElementById('statTotal').textContent     = total.toLocaleString()
+      document.getElementById('statSuccess').textContent   = `${rate}%`
+      document.getElementById('statLatency').textContent   = avgLat ? `${avgLat}` : '—'
+      document.getElementById('statProviders').textContent = activeP || '—'
+      document.getElementById('rangeLabel').textContent    = `Data 24 jam terakhir — ${fmtTime(new Date().toISOString())}`
+
+      // Fetch recent 20 rows
+      const recentRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/usage_logs?select=*&order=created_at.desc&limit=20`,
+        { headers }
+      )
+      const rows = await recentRes.json()
+
+      document.getElementById('tableCount').textContent = `${rows.length} entri terbaru`
+
+      const tbody = document.getElementById('tableBody')
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Belum ada data logs di tabel usage_logs Supabase lo.</td></tr>'
+        return
+      }
+
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td><span class="provider-chip"><span class="provider-dot"></span>${r.provider || '—'}</span></td>
+          <td>${effortBadge(r.effort)}</td>
+          <td class="mono">${r.tokens_in ?? '—'}</td>
+          <td class="mono">${r.tokens_out ?? '—'}</td>
+          <td class="mono">${r.latency_ms ? r.latency_ms + ' ms' : '—'}</td>
+          <td><span class="badge ${r.success ? 'badge-ok' : 'badge-fail'}">${r.success ? 'OK' : 'Fail'}</span></td>
+          <td class="mono">${fmtTime(r.created_at)}</td>
+        </tr>
+      `).join('')
+    } catch (err) {
+      document.getElementById('tableBody').innerHTML =
+        `<tr><td colspan="7" class="table-empty">Gagal melakukan sinkronisasi database: ${err.message}</td></tr>`
+    }
+  }
+
+  // Jalankan inisialisasi dashboard
+  loadDashboard()
+</script>
+</body>
+  </html>
