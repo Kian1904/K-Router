@@ -165,7 +165,7 @@
     flex-direction: column;
     background: var(--surface);
     position: relative;
-    max-width: 820px;
+    width: 100%;
   }
 
   /* Header Controls */
@@ -177,15 +177,16 @@
     border-bottom: 1px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
+    width: 100%;
   }
-  .logo { font-family: 'SF Mono', monospace; font-size: 0.8rem; font-weight: 600; color: var(--text); }
+  .logo { font-family: 'Hedvig Letters Serif', serif; font-size: 1.1rem; font-weight: 600; color: var(--ink); }
   .signal {
     font-family: 'SF Mono', monospace; font-size: 0.72rem; color: var(--muted);
     display: flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem;
     border-radius: 4px; background: var(--canvas); border: 1px solid var(--border);
   }
   .signal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
-  .signal.on .signal-dot { background: var(--pale-green-text); }
+  .signal.on .signal-dot { background: var(--green-tx); }
   .spacer { flex: 1; }
 
   select#provider-select {
@@ -201,7 +202,7 @@
   /* Limit Banner State */
   #limit-screen {
     position: absolute;
-    inset: 54px 0 0 0; /* Menutupi area workspace di bawah header */
+    inset: 54px 0 0 0;
     background: rgba(251, 251, 250, 0.96);
     backdrop-filter: blur(4px);
     display: none;
@@ -214,139 +215,106 @@
   }
   .limit-card {
     background: var(--surface);
-    border: 1px solid var(--pale-red-text);
+    border: 1px solid var(--red-tx);
     padding: 2rem;
     border-radius: 12px;
     max-width: 420px;
     box-shadow: 0 4px 12px rgba(159, 47, 45, 0.05);
   }
-  .limit-title { font-family: 'SF Mono', monospace; color: var(--pale-red-text); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .limit-title { font-family: 'SF Mono', monospace; color: var(--red-tx); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
   .limit-desc { font-size: 0.88rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
 
-  /* Batasi lebar konten chat utama biar proporsional di tengah */
-.chat-view {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 760px; /* Samain dengan lebar input footer */
-  margin: 0 auto;   /* Bikin dia otomatis di tengah layar */
-  background: transparent;
-  overflow: hidden;
-}
-
-/* Biar bubble pesan di dalamnya ikutan rapi */
-.msg {
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto 1.5rem auto; /* Kasih jarak antar pesan */
-  padding: 1rem 1.25rem;
-  }
-  
   /* Play Store Tracker Component */
   .progress-container { width: 100%; height: 3px; background: var(--border); position: relative; overflow: hidden; display: none; flex-shrink: 0; }
-  .progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s cubic-bezier(0.1, 0.8, 0.3, 1); }
-  .pct-counter { font-family: 'SF Mono', monospace; font-size: 10px; font-weight: 600; color: var(--accent); background: var(--pale-blue-bg); padding: 2px 6px; border-radius: 4px; display: none; }
+  .progress-bar { height: 100%; width: 0%; background: var(--ink); transition: width 0.2s cubic-bezier(0.1, 0.8, 0.3, 1); }
+  .pct-counter { font-family: 'SF Mono', monospace; font-size: 10px; font-weight: 600; color: var(--ink); background: var(--blue-bg); padding: 2px 6px; border-radius: 4px; display: none; }
 
   #compare-tabs { display: none; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; font-family: 'SF Mono', monospace; font-size: 0.75rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
   .tab-btn.active { color: var(--text); border-bottom-color: var(--text); font-weight: bold; }
 
   #workspace { flex: 1; display: flex; width: 100%; overflow: hidden; background: var(--canvas); }
-  .chat-view { flex: 1; overflow-y: auto; display: flex; flex-direction: column; height: 100%; }
-  #view-b { display: none; border-left: 1px solid var(--border); }
-  #messages, #messages-b { flex: 1; overflow-y: auto; width: 100%; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
-
-  /* Chat Bubble Architecture */
-  .msg-wrapper { display: flex; flex-direction: column; width: 100%; }
-  .msg-wrapper.user-align { align-items: flex-end; }
-  .msg-wrapper.ai-align { align-items: flex-start; }
-  .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); position: relative; }
   
-  .msg-wrapper.user-align .msg { background: var(--user-bubble-bg); color: var(--user-bubble-text); border-bottom-right-radius: 4px; }
-  .msg-wrapper.ai-align .msg { background: var(--ai-bubble-bg); color: var(--ai-bubble-text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
-  .msg-wrapper.ai-align .msg.error-bubble { background: var(--pale-red-bg); color: var(--pale-red-text); border-color: #F5C2C1; }
-  .msg-wrapper.ai-align .msg.search-bubble { background: var(--pale-yellow-bg); color: var(--pale-yellow-text); border-color: #EEDCA5; }
+  /* Pembungkus chat utama agar berada di tengah proporsional */
+  .chat-view { 
+    flex: 1; 
+    overflow-y: auto; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; 
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    background: transparent;
+  }
+  #view-b { display: none; border-left: 1px solid var(--border); }
+  #messages, #messages-b { flex: 1; overflow-y: auto; width: 100%; padding: 30px 20px; display: flex; flex-direction: column; gap: 24px; }
 
-  .msg-meta { font-family: 'SF Mono', monospace; font-size: 10px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 6px; text-transform: uppercase; }
-  .msg-wrapper.user-align .msg-meta { justify-content: flex-end; padding-right: 4px; }
-  .msg-wrapper.ai-align .msg-meta { justify-content: flex-start; padding-left: 4px; }
+  /* Chat Bubble Architecture standard ala Claude */
+  .msg { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+  
+  .msg-meta { font-family: 'SF Mono', monospace; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .tag { font-weight: bold; text-transform: uppercase; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+  .tag.user { background: var(--meadow); color: var(--ink); }
+  .tag.ai { background: var(--ink); color: #fff; }
+  .tag.error { background: var(--red-bg); color: var(--red-tx); }
+  .tag.search { background: var(--yellow-bg); color: var(--yellow-tx); }
 
-  /* Thought Box Box */
-  .thought-box { width: 100%; margin-bottom: 8px; background: rgba(0,0,0,0.02); border-left: 3px solid var(--muted); border-radius: 4px; font-size: 13px; }
+  /* Thought Box */
+  .thought-box { width: 100%; margin: 8px 0; background: rgba(0,0,0,0.02); border-left: 3px solid var(--muted); border-radius: 4px; font-size: 13px; }
   .thought-box summary { padding: 6px 10px; color: var(--muted); cursor: pointer; font-weight: 600; font-family: 'SF Mono', monospace; font-size: 11px; outline: none; }
   .thought-content { padding: 8px 10px; color: #555555; border-top: 1px dashed var(--border); font-style: italic; white-space: pre-wrap; }
 
-  .msg-content { font-size: 14.5px; word-break: break-word; }
-  .msg-content p { margin-bottom: 8px; }
+  .msg-content { font-size: 0.95rem; color: var(--text); line-height: 1.6; word-break: break-word; }
+  .msg-content p { margin-bottom: 12px; }
   .msg-content p:last-child { margin-bottom: 0; }
-  .msg-wrapper.user-align .msg-content code { background: rgba(255,255,255,0.15); color: #FFF; border: none; }
-  .msg-content code { font-family: 'SF Mono', monospace; font-size: 12px; background: rgba(0,0,0,0.04); padding: 2px 5px; border-radius: 4px; color: var(--pale-yellow-text); }
-  .msg-content pre { background: #1E1E1E; border-radius: 8px; padding: 12px; overflow-x: auto; margin: 8px 0; }
+  .msg-content code { font-family: 'SF Mono', monospace; font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; color: var(--ink); }
+  .msg-content pre { background: #1E1E1E; border-radius: 8px; padding: 14px; overflow-x: auto; margin: 12px 0; }
   .msg-content pre code { color: #A8FFB2; background: none; padding: 0; }
   
-  .msg-actions { display: flex; gap: 6px; margin-top: 8px; }
-  .action-btn { font-family: 'SF Mono', monospace; font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); padding: 2px 6px; cursor: pointer; }
-  .action-btn.dl-btn { color: var(--pale-blue-text); border-color: var(--pale-blue-bg); }
+  .msg-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .action-btn { font-family: 'SF Mono', monospace; font-size: 11px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 3px 8px; cursor: pointer; transition: all 0.15s; }
+  .action-btn:hover { border-color: var(--ink); color: var(--text); }
 
-  #empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 0.6rem; color: var(--muted); text-align: center; padding: 2rem; background: var(--canvas); }
+  #empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 0.6rem; color: var(--muted); text-align: center; padding: 2rem; background: transparent; }
 
-  .footer-container { padding: 0.75rem 1rem env(safe-area-inset-bottom, 0.75rem); background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; width: 100%; }
-  footer { display: flex; gap: 0.5rem; align-items: flex-end; width: 100%; }
-
-  textarea#input { flex: 1; background: var(--canvas); border: 1px solid var(--border); border-radius: 20px; color: var(--text); padding: 0.6rem 1rem; font-size: 0.92rem; font-family: inherit; resize: none; height: 38px; max-height: 140px; outline: none; line-height: 1.4; }
-  textarea#input:focus { border-color: var(--accent); background: var(--surface); }
-  button#send { background: #111111; color: #FFFFFF; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.15s, transform 0.1s; }
-  button#send:hover { background: var(--accent); }
-  button#send:disabled { opacity: 0.25; cursor: not-allowed; }
-
-  #upload-btn { height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-  #effort-select { background: var(--canvas); border: 1px solid var(--border); border-radius: 18px; color: var(--text); font-size: 0.78rem; padding: 0 0.6rem; height: 38px; outline: none; }
-
-  #setup { position: fixed; inset: 0; background: var(--canvas); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; z-index: 1000; }
-  #setup.hidden { display: none; }
-  #token-input { width: 100%; max-width: 320px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.9rem; font-family: 'SF Mono', monospace; outline: none; }
+  .footer-container { width: 100%; background: transparent; flex-shrink: 0; }
+  footer { width: 100%; display: flex; justify-content: center; }
 
   @media (min-width: 768px) {
     #compare-tabs { display: none !important; }
-    .chat-view { display: flex !important; width: 50%; }
+    /* Saat mode bandingkan dilepas batasan width-nya */
+    .app-container.split-mode .chat-view { max-width: 100%; width: 50%; margin: 0; }
   }
 
   @media (max-width: 767px) {
-    #menu-toggle-btn { display: block !important; } /* Munculin tombol ☰ di HP */
-    
-    /* Ubah sidebar jadi melayang di HP */
+    #menu-toggle-btn { display: block !important; }
     #sidebar {
       position: fixed;
       inset: 0 auto 0 0;
       z-index: 200;
-      transform: translateX(-100%); /* Sembunyikan di luar layar kiri */
+      transform: translateX(-100%);
       transition: transform 0.2s ease-in-out;
       box-shadow: 5px 0 15px rgba(0,0,0,0.1);
       width: 260px;
     }
-    
-    /* Class tambahan pas sidebar aktif di HP */
-    #sidebar.mobile-open {
-      transform: translateX(0);
-    }
-
-    .app-container { border-left: none; border-right: none; }
+    #sidebar.mobile-open { transform: translateX(0); }
+    .chat-view { max-width: 100%; padding: 0; }
     #view-b.active-tab { display: flex !important; width: 100%; }
     #view-a.active-tab { display: flex !important; width: 100%; }
     #view-a:not(.active-tab) { display: none !important; }
     #view-b:not(.active-tab) { display: none !important; }
   }
-  </style>
+</style>
 </head>
 <body>
 
 <div id="setup">
-  <div style="font-family: 'SF Mono', monospace; font-size: 1.3rem; font-weight: 700;">K'sRouter</div>
+  <div style="font-family: 'Hedvig Letters Serif', serif; font-size: 1.5rem; font-weight: 700; color: var(--ink);">K's Router</div>
   <p style="color: var(--muted); font-size: 0.85rem;">Masukkan bearer token untuk mulai.</p>
   <input id="token-input" type="password" placeholder="token..." autocomplete="off" />
-  <p id="setup-error" style="color: var(--pale-red-text); font-size: 0.8rem; display: none;">Token salah, coba lagi.</p>
-  <button id="save-token" style="background:#111111; color:#fff; border:none; border-radius:6px; padding:0.7rem 2rem; cursor:pointer;">Masuk</button>
+  <p id="setup-error" style="color: var(--red-tx); font-size: 0.8rem; display: none;">Token salah, coba lagi.</p>
+  <button id="save-token">Masuk</button>
 </div>
 
 <div class="app-layout">
@@ -360,7 +328,7 @@
     </div>
   </div>
 
-  <div class="app-container">
+  <div class="app-container" id="app-main-container">
     <div id="limit-screen">
       <div class="limit-card">
         <div class="limit-title">STATUS: 429 LIMIT EXCEEDED</div>
@@ -369,14 +337,10 @@
       </div>
     </div>
 
-   <header>
-  <!-- Tombol Menu untuk HP (muncul di layar kecil) -->
-  <button class="icon-btn" id="menu-toggle-btn" style="display: none; font-size: 1.1rem; padding: 0.2rem 0.6rem;">☰</button>
-  <!-- Tombol Back ke Dashboard -->
-  <button class="icon-btn" onclick="window.location.href='dashboard.html'" title="Ke Dashboard">←</button>
-  <span class="logo">K'sRouter</span>
-  ...
-      </div>
+    <header>
+      <button class="icon-btn" id="menu-toggle-btn" style="display: none; font-size: 1.1rem; padding: 0.2rem 0.6rem;">☰</button>
+      <button class="icon-btn" onclick="window.location.href='dashboard.html'" title="Ke Dashboard">←</button>
+      <span class="logo">K's Router</span>
       <div class="spacer"></div>
       <span id="progress-pct" class="pct-counter">0%</span>
       <select id="provider-select">
@@ -422,73 +386,36 @@
     </div>
 
     <div class="footer-container">
-    <footer style="background: transparent; border: none; max-width: 760px; width: 100%; margin: 0 auto; padding: 1rem 1.25rem 2rem;">
-  <div class="input-container" style="background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 0.5rem 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); width: 100%;">
-    
-    <textarea id="input" placeholder="Chat with K's Router... atau /search query" rows="1" style="width: 100%; background: transparent; border: none; color: var(--text); padding: 0.5rem 0.5rem 0; font-size: 0.95rem; font-family: inherit; resize: none; min-height: 40px; max-height: 160px; outline: none; line-height: 1.5;"></textarea>
-    
-    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 0.25rem;">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
-        <button id="upload-btn" type="button" title="Inject file" style="background: rgba(19,14,48,0.05); border: none; color: var(--ink); cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: background 0.15s;">+</button>
-        
-        <select id="effort-select" style="background: rgba(19,14,48,0.04); border: none; border-radius: 16px; color: var(--ink); font-size: 0.78rem; padding: 0.35rem 0.75rem; font-weight: 500; outline: none; cursor: pointer; font-family: inherit;">
-          <option value="low">😴 Low</option>
-          <option value="medium" selected>😮‍💨 Medium</option>
-          <option value="high">😬 High</option>
-        </select>
+      <footer>
+        <div class="input-container" style="background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 0.5rem 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); width: 100%; max-width: 760px; margin: 0 20px 20px 20px;">
+          <textarea id="input" placeholder="Chat with K's Router... atau /search query" rows="1" style="width: 100%; background: transparent; border: none; color: var(--text); padding: 0.5rem 0.5rem 0; font-size: 0.95rem; font-family: inherit; resize: none; min-height: 40px; max-height: 160px; outline: none; line-height: 1.5;"></textarea>
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 0.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
+              <button id="upload-btn" type="button" title="Inject file" style="background: rgba(19,14,48,0.05); border: none; color: var(--ink); cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: background 0.15s;">+</button>
+              
+              <select id="effort-select" style="background: rgba(19,14,48,0.04); border: none; border-radius: 16px; color: var(--ink); font-size: 0.78rem; padding: 0.35rem 0.75rem; font-weight: 500; outline: none; cursor: pointer; font-family: inherit;">
+                <option value="low">😴 Low</option>
+                <option value="medium" selected>😮‍💨 Medium</option>
+                <option value="high">😬 High</option>
+              </select>
 
-        <span id="file-preview-badge" style="display: none; font-size: 0.75rem; background: var(--blue-bg); color: var(--blue-tx); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
-      </div>
+              <span id="file-preview-badge" style="display: none; font-size: 0.75rem; background: var(--blue-bg); color: var(--blue-tx); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+            </div>
 
-      <button id="send" style="background: var(--ink); color: #FFFFFF; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s;" disabled>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-      </button>
-    </div>
-
-  </div>
-    </footer>
+            <button id="send" style="background: var(--ink); color: #FFFFFF; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s;" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   </div>
 </div>
 
 <script>
- const menuToggleBtn = document.getElementById('menu-toggle-btn');
-  const sidebarEl = document.getElementById('sidebar');
-
-  // Klik tombol ☰ buat buka/tutup
-  menuToggleBtn.onclick = (e) => {
-    e.stopPropagation();
-    sidebarEl.classList.toggle('mobile-open');
-  };
-
-  // Kalau klik di luar sidebar pas lagi kebuka di HP, otomatis tutup otomatis
-  document.addEventListener('click', (e) => {
-    if (window.innerWidth < 768 && sidebarEl.classList.contains('mobile-open')) {
-      if (!sidebarEl.contains(e.target) && e.target !== menuToggleBtn) {
-        sidebarEl.classList.remove('mobile-open');
-      }
-    }
-  });
-
-  // Modifikasi fungsi loadSessionChat bawaan lo agar otomatis nutup sidebar setelah ganti chat di HP
-  const originalLoadSessionChat = loadSessionChat;
-  loadSessionChat = function(sid) {
-    originalLoadSessionChat(sid);
-    sidebarEl.classList.remove('mobile-open'); // Tutup laci setelah pilih history
-  };
-  
-  const CHAT_ENDPOINT = '/api/chat'
-  const SEARCH_ENDPOINT = '/api/search'
-
-  let TOKEN = localStorage.getItem('kr_token') || ''
-  
-  // PERSISTEN STATE ARCHITECTURE via LocalStorage
-  let currentSessionId = localStorage.getItem('kr_curr_session') || ''
-  let sessions = JSON.parse(localStorage.getItem('kr_sessions')) || {}
-
-  marked.setOptions({ breaks: true, gfm: true })
-
+  // Inisialisasi awal Element DOM & Token agar tidak tabrakan atau terlewat
   const setupEl = document.getElementById('setup')
   const tokenInput = document.getElementById('token-input')
   const setupError = document.getElementById('setup-error')
@@ -499,12 +426,11 @@
   const sendBtn = document.getElementById('send')
   const providerSelect = document.getElementById('provider-select')
   const effortSelect = document.getElementById('effort-select')
-  const signalEl = document.getElementById('signal')
-  const providerLabel = document.getElementById('provider-label')
   const fileInjector = document.getElementById('file-injector')
   const uploadBtn = document.getElementById('upload-btn')
   const historyListView = document.getElementById('history-list-view')
   const limitScreen = document.getElementById('limit-screen')
+  const appMainContainer = document.getElementById('app-main-container')
   
   const compareTabs = document.getElementById('compare-tabs')
   const viewA = document.getElementById('view-a')
@@ -515,10 +441,71 @@
   const progressContainer = document.getElementById('progressContainer')
   const progressBar = document.getElementById('progressBar')
   const progressPct = document.getElementById('progress-pct')
+  
+  const menuToggleBtn = document.getElementById('menu-toggle-btn');
+  const sidebarEl = document.getElementById('sidebar');
+
+  const CHAT_ENDPOINT = '/api/chat'
+  const SEARCH_ENDPOINT = '/api/search'
+
+  let TOKEN = localStorage.getItem('kr_token') || ''
+  let currentSessionId = localStorage.getItem('kr_curr_session') || ''
+  let sessions = JSON.parse(localStorage.getItem('kr_sessions')) || {}
   let progressInterval;
 
-  // Cek token validasi awal
+  marked.setOptions({ breaks: true, gfm: true })
+
   if (TOKEN) setupEl.classList.add('hidden')
+
+  // --- MOBILE SIDEBAR HANDLER ---
+  menuToggleBtn.onclick = (e) => {
+    e.stopPropagation();
+    sidebarEl.classList.toggle('mobile-open');
+  };
+
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth < 768 && sidebarEl.classList.contains('mobile-open')) {
+      if (!sidebarEl.contains(e.target) && e.target !== menuToggleBtn) {
+        sidebarEl.classList.remove('mobile-open');
+      }
+    }
+  });
+
+  // --- SAVE TOKEN LOGIC PERBAIKAN ---
+  document.getElementById('save-token').onclick = async () => {
+    const val = tokenInput.value.trim();
+    if (!val) return;
+    
+    tokenInput.classList.remove('err');
+    setupError.style.display = 'none';
+    
+    try {
+      const test = await fetch(CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': 'Bearer ' + val 
+        },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
+      });
+      
+      if (test.status === 401) {
+        tokenInput.classList.add('err');
+        setupError.style.display = 'block';
+        return;
+      }
+      
+      TOKEN = val;
+      localStorage.setItem('kr_token', val);
+      setupEl.classList.add('hidden');
+      
+    } catch (err) {
+      console.warn("Bypass auth check karena backend offline:", err);
+      TOKEN = val;
+      localStorage.setItem('kr_token', val);
+      setupEl.classList.add('hidden');
+    }
+  };
 
   // --- ENGINE SESSIONS & PERSISTENCE MGR ---
   function initNewSession() {
@@ -545,7 +532,10 @@
       const item = document.createElement('div');
       item.className = `history-item ${sid === currentSessionId ? 'active' : ''}`;
       item.textContent = sessions[sid].title;
-      item.onclick = () => loadSessionChat(sid);
+      item.onclick = () => {
+        loadSessionChat(sid);
+        sidebarEl.classList.remove('mobile-open');
+      };
       historyListView.appendChild(item);
     });
   }
@@ -555,20 +545,17 @@
     localStorage.setItem('kr_curr_session', sid);
     renderSidebar();
     
-    // Wipe visual canvas
     messagesEl.innerHTML = '';
     messagesBEl.innerHTML = '';
     
     const hist = sessions[sid].history;
-    if (hist.length === 0) {
+    if (!hist || hist.length === 0) {
       messagesEl.appendChild(emptyEl);
       emptyEl.style.display = 'flex';
     } else {
       emptyEl.style.display = 'none';
-      // Re-populate bubbles dari history yang ke-load
       hist.forEach(m => {
         if (m.role === 'user') {
-          // Cari jika pesan user adalah string perintah search
           if (!m.content.startsWith('Use ONLY the following search results')) {
              addMsgRaw('user', m.content, messagesEl);
           }
@@ -580,14 +567,24 @@
     closeLimitScreen();
   }
 
-  // Helper render instan tanpa manipulasi chain history
   function addMsgRaw(role, content, targetContainer) {
     if (targetContainer === messagesEl) emptyEl.style.display = 'none';
-    const wrapper = document.createElement('div');
-    wrapper.className = `msg-wrapper ${role === 'user' ? 'user-align' : 'ai-align'}`;
     
     const div = document.createElement('div');
     div.className = 'msg';
+
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    const tag = document.createElement('span');
+    tag.className = 'tag ' + role;
+    tag.textContent = role === 'user' ? 'you' : 'ai';
+    meta.appendChild(tag);
+    
+    const ts = document.createElement('span');
+    ts.style = "font-size:10px; color:var(--muted);";
+    ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    meta.appendChild(ts);
+    div.appendChild(meta);
 
     let finalContent = content;
     if (role === 'ai' && content.includes('<think>') && content.includes('</think>')) {
@@ -610,20 +607,14 @@
     contentDiv.className = 'msg-content';
     contentDiv.innerHTML = marked.parse(finalContent || '...');
     div.appendChild(contentDiv);
-    wrapper.appendChild(div);
-    targetContainer.appendChild(wrapper);
+    
+    targetContainer.appendChild(div);
     targetContainer.scrollTop = targetContainer.scrollHeight;
   }
 
-  // --- TRIGGER LIMIT SCREEN CONTROL ---
-  function triggerLimitScreen() {
-    limitScreen.style.display = 'flex';
-  }
-  function closeLimitScreen() {
-    limitScreen.style.display = 'none';
-  }
+  function triggerLimitScreen() { limitScreen.style.display = 'flex'; }
+  function closeLimitScreen() { limitScreen.style.display = 'none'; }
 
-  // --- LOADING ENGINE BAR ---
   function startProgress() {
     progressContainer.style.display = 'block'; progressPct.style.display = 'block';
     let pct = 0; progressBar.style.width = '0%'; progressPct.textContent = '0%';
@@ -646,9 +637,11 @@
   providerSelect.onchange = () => {
     if (providerSelect.value === 'compare') {
       viewb.style.display = 'flex';
+      appMainContainer.classList.add('split-mode');
       if (window.innerWidth < 768) compareTabs.style.display = 'flex';
     } else {
       viewb.style.display = 'none'; compareTabs.style.display = 'none';
+      appMainContainer.classList.remove('split-mode');
       viewA.classList.add('active-tab'); viewb.classList.remove('active-tab');
     }
   }
@@ -656,51 +649,12 @@
   tabABtn.onclick = () => { tabABtn.classList.add('active'); tabBBtn.classList.remove('active'); viewA.classList.add('active-tab'); viewb.classList.remove('active-tab'); }
   tabBBtn.onclick = () => { tabBBtn.classList.add('active'); tabABtn.classList.remove('active'); viewb.classList.add('active-tab'); viewA.classList.remove('active-tab'); }
 
-  document.getElementById('save-token').onclick = async () => {
-    const val = tokenInput.value.trim();
-    if (!val) return;
-    
-    // Reset state error sebelum mencoba
-    tokenInput.classList.remove('err');
-    setupError.style.display = 'none';
-    
-    try {
-      const test = await fetch(CHAT_ENDPOINT, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': 'Bearer ' + val 
-        },
-        body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
-      });
-      
-      if (test.status === 401) {
-        tokenInput.classList.add('err');
-        setupError.style.display = 'block';
-        return;
-      }
-      
-      // Jika lolos atau server response normal (bukan 401)
-      TOKEN = val;
-      localStorage.setItem('kr_token', val);
-      setupEl.classList.add('hidden');
-      
-    } catch (err) {
-      // Tololeransi jika backend lokal mati saat testing, ijinkan masuk
-      console.warn("Bypass auth check karena backend offline:", err);
-      TOKEN = val;
-      localStorage.setItem('kr_token', val);
-      setupEl.classList.add('hidden');
-    }
-  };
-  
   document.getElementById('clear-btn').onclick = () => {
     if(sessions[currentSessionId]) {
       sessions[currentSessionId].history = [];
       saveSessionsToStorage();
       loadSessionChat(currentSessionId);
     }
-    setSignal('idle');
   }
 
   uploadBtn.onclick = () => { fileInjector.click() }
@@ -708,7 +662,6 @@
   let attachedFileContent = "";
   let attachedFileName = "";
 
-  // Handle upload file tanpa ngerusak textarea
   fileInjector.addEventListener('change', async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -720,8 +673,6 @@
     try {
       attachedFileContent = await file.text()
       attachedFileName = file.name
-      
-      // Munculin indikator file kecil di atas bar input
       const badge = document.getElementById('file-preview-badge');
       badge.textContent = `📄 ${file.name}`;
       badge.style.display = 'block';
@@ -737,14 +688,12 @@
   }
   inputEl.addEventListener('input', updateSendButtonState);
 
-  // Fungsi Modifikasi addMsg dengan Fitur File Box & Edit Pesan
   function addMsg(role, content, opts = {}) {
     const targetContainer = opts.target || messagesEl;
     if (targetContainer === messagesEl) emptyEl.style.display = 'none';
 
     const div = document.createElement('div')
     div.className = 'msg'
-    div.setAttribute('data-role', role);
 
     const meta = document.createElement('div')
     meta.className = 'msg-meta'
@@ -756,18 +705,17 @@
 
     if (opts.provider) {
       const pSpan = document.createElement('span')
-      pSpan.className = 'msg-provider'
-      pSpan.textContent = opts.provider
+      pSpan.style = "font-size:10px; font-weight:600; color:var(--muted);"
+      pSpan.textContent = opts.provider.toUpperCase()
       meta.appendChild(pSpan)
     }
 
     const ts = document.createElement('span')
-    ts.className = 'msg-ts'
+    ts.style = "font-size:10px; color:var(--muted);"
     ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     meta.appendChild(ts)
     div.appendChild(meta)
 
-    // JIKA ADA ATTACHMENT FILE (Tampilkan Kotak File Rapi, Bukan Code Dump)
     if (opts.fileName) {
       const fileBox = document.createElement('div');
       fileBox.style = "display: inline-flex; align-items: center; gap: 8px; background: var(--meadow); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; color: var(--ink); font-weight: 500;";
@@ -780,23 +728,27 @@
 
     if (opts.thinking) {
       contentDiv.innerHTML = '<span class="dots"><span>.</span><span>.</span><span>.</span></span>'
-    } else if (role === 'search') {
-      // (Tetap simpan logik search lama lo di sini)
-      if (content.answer) {
-        const ans = document.createElement('div'); ans.className = 'search-answer'; ans.textContent = content.answer; contentDiv.appendChild(ans);
-      }
-      const links = document.createElement('div'); links.className = 'search-results';
-      content.results.forEach(r => {
-        const a = document.createElement('a'); a.className = 'search-link'; a.href = r.url; a.target = '_blank'; a.textContent = r.title; links.appendChild(a);
-      })
-      contentDiv.appendChild(links)
     } else {
-      contentDiv.innerHTML = marked.parse(content)
+      let finalContent = content;
+      if (role === 'ai' && content.includes('<think>') && content.includes('</think>')) {
+        const parts = content.split('</think>');
+        const thoughtText = parts[0].replace('<think>', '').trim();
+        finalContent = parts[1] ? parts[1].trim() : '';
+        if (thoughtText) {
+          const details = document.createElement('details');
+          details.className = 'thought-box';
+          const summary = document.createElement('summary');
+          summary.textContent = '💭 Thinking Process (click)';
+          const thoughtDiv = document.createElement('div');
+          thoughtDiv.className = 'thought-content';
+          thoughtDiv.textContent = thoughtText;
+          details.appendChild(summary); details.appendChild(thoughtDiv); div.appendChild(details);
+        }
+      }
+      contentDiv.innerHTML = marked.parse(finalContent)
     }
-
     div.appendChild(contentDiv)
 
-    // ACTION BUTTONS (Copy, Download, & EDIT UNTUK USER)
     const actions = document.createElement('div')
     actions.className = 'msg-actions'
 
@@ -811,27 +763,23 @@
       }
       actions.appendChild(copyBtn)
       div.appendChild(actions)
-
-      if (content.includes('```')) {
-        setTimeout(() => attachDownloadButtons(contentDiv, content), 50);
-      }
     } else if (role === 'user') {
-      // Fitur Edit Pesan User
       const editBtn = document.createElement('button')
       editBtn.className = 'action-btn'
       editBtn.textContent = 'edit'
       editBtn.onclick = () => {
         inputEl.value = content;
         inputEl.focus();
-        // Hapus sisa chat di bawah pesan ini agar chain history sinkron kembali saat dikirim ulang
         const nodes = Array.from(targetContainer.children);
         const idx = nodes.indexOf(div);
         if (idx !== -1) {
           while (targetContainer.children.length > idx) {
             targetContainer.removeChild(targetContainer.lastChild);
           }
-          // Potong array history sync ke indeks pesan ini
-          history = history.slice(0, idx);
+          if (sessions[currentSessionId]) {
+            sessions[currentSessionId].history = sessions[currentSessionId].history.slice(0, idx);
+            saveSessionsToStorage();
+          }
         }
         updateSendButtonState();
       }
@@ -842,7 +790,7 @@
     targetContainer.appendChild(div)
     targetContainer.scrollTop = targetContainer.scrollHeight
     return div
-      }
+  }
 
   async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
     try {
@@ -856,11 +804,7 @@
         body: JSON.stringify(payload)
       })
 
-      // INTERCEPT LIMIT EXCEEDED (429 ATAU FAIL)
-      if (res.status === 429) {
-        triggerLimitScreen();
-        return null;
-      }
+      if (res.status === 429) { triggerLimitScreen(); return null; }
       if (res.status === 401) { addMsg('error', 'Unauthorized — token salah.', { target: targetContainer }); return null; }
       if (!res.ok) { addMsg('error', 'Error ' + res.status + ' — provider gagal.', { target: targetContainer }); return null; }
 
@@ -874,72 +818,64 @@
     }
   }
 
- async function send() {
+  async function send() {
     let text = inputEl.value.trim()
     if (!text && !attachedFileContent) return
 
     let displayBody = text;
     let fullPrompt = text;
 
-    // Gabungkan text dan file secara sistematis ke API, tapi UI tetap bersih
     if (attachedFileContent) {
       fullPrompt = `[Attached File]: ${attachedFileName}\n\`\`\`\n${attachedFileContent}\n\`\`\`\n\n${text || 'Tolong analisa file ini.'}`;
       if (!text) displayBody = `Menganalisa file ${attachedFileName}`;
     }
 
-    // Reset input states & preview UI
     inputEl.value = ''
-    inputEl.style.height = '42px'
+    inputEl.style.height = '38px'
     document.getElementById('file-preview-badge').style.display = 'none';
 
-    if (text.startsWith('/search ')) {
-      await doSearch(text.slice(8).trim())
-      return
-    }
-
     sendBtn.disabled = true
-    history.push({ role: 'user', content: fullPrompt })
+    
+    if (!sessions[currentSessionId]) initNewSession();
+    let currentHistory = sessions[currentSessionId].history;
+    
+    currentHistory.push({ role: 'user', content: fullPrompt })
 
     const mode = providerSelect.value
+    startProgress();
 
     if (mode === 'compare') {
       addMsg('user', displayBody, { target: messagesEl, fileName: attachedFileName })
       addMsg('user', displayBody, { target: messagesBEl, fileName: attachedFileName })
       
-      tabABtn.textContent = "NVIDIA DeepSeek";
-      tabBBtn.textContent = "FlatKey GPT";
-      setSignal('routing')
+      tabABtn.textContent = "Loading A...";
+      tabBBtn.textContent = "Loading B...";
 
       const [replyA, replyB] = await Promise.all([
-        fetchModelResponse('nvidia_deepseek', { messages: history }, messagesEl, 'tab-a-btn'),
-        fetchModelResponse('flatkey', { messages: history }, messagesBEl, 'tab-b-btn')
+        fetchModelResponse('nvidia_deepseek', { messages: currentHistory }, messagesEl, 'tab-a-btn'),
+        fetchModelResponse('flatkey', { messages: currentHistory }, messagesBEl, 'tab-b-btn')
       ]);
 
-      if (replyA) history.push({ role: 'assistant', content: replyA })
+      stopProgress();
+      if (replyA) currentHistory.push({ role: 'assistant', content: replyA })
     } else {
       addMsg('user', displayBody, { target: messagesEl, fileName: attachedFileName })
-      setSignal('routing')
-      const reply = await fetchModelResponse(mode, { messages: history }, messagesEl)
+      const reply = await fetchModelResponse(mode, { messages: currentHistory }, messagesEl)
+      stopProgress();
       if (reply) {
-        history.push({ role: 'assistant', content: reply })
-        setSignal('provider', mode || 'auto')
-      } else {
-        setSignal('idle')
+        currentHistory.push({ role: 'assistant', content: reply })
       }
     }
 
-    // Clear memory attachment setelah terkirim
-    attachedFileContent = "";
-    attachedFileName = "";
-    sendBtn.disabled = true
- }
-    
-    // Update Judul Sesi Otomatis dari Pesan Pertama agar Estetik
     if (currentHistory.length <= 2) {
       sessions[currentSessionId].title = text.slice(0, 20) + (text.length > 20 ? '...' : '');
     }
     saveSessionsToStorage();
     renderSidebar();
+
+    attachedFileContent = "";
+    attachedFileName = "";
+    sendBtn.disabled = true
   }
 
   sendBtn.onclick = send;
@@ -958,4 +894,4 @@
   }
 </script>
 </body>
-      </html>
+  </html>
