@@ -1,3 +1,10 @@
+const { createClient } = require('@supabase/supabase-js')
+
+// Inisialisasi Supabase SDK Client
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
+
 const PROVIDERS = {
   groq: {
     name: 'Groq (Llama)',
@@ -6,7 +13,6 @@ const PROVIDERS = {
     model: 'llama-3.3-70b-versatile',
     type: 'openai'
   },
-
   github_gpt: {
     name: 'GitHub (GPT)',
     url: 'https://models.github.ai/inference/chat/completions',
@@ -14,7 +20,6 @@ const PROVIDERS = {
     model: 'openai/gpt-4o-mini',
     type: 'openai'
   },
-
   nvidia_qwen: {
     name: 'NVIDIA NIM (Qwen)',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
@@ -22,7 +27,6 @@ const PROVIDERS = {
     model: 'qwen/qwen3.5-397b-a17b',
     type: 'openai'
   },
-
   nvidia_deepseek: {
     name: 'NVIDIA NIM (DeepSeek)',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
@@ -30,7 +34,6 @@ const PROVIDERS = {
     model: 'deepseek-ai/deepseek-v4-pro',
     type: 'openai'
   },
-
   nvidia_z_ai: {
     name: 'NVIDIA NIM (GLM)',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
@@ -38,7 +41,6 @@ const PROVIDERS = {
     model: 'z-ai/glm-5.2',
     type: 'openai'
   },
-
   kilo: {
     name: 'Kilo Gateway (Claude)',
     url: 'https://api.kilo.ai/api/gateway/chat/completions',
@@ -46,7 +48,6 @@ const PROVIDERS = {
     model: 'anthropic/claude-haiku-4.5',
     type: 'openai'
   },
-
   cerebras: {
     name: 'Cerebras (Gemma)',
     url: 'https://api.cerebras.ai/v1/chat/completions',
@@ -54,7 +55,6 @@ const PROVIDERS = {
     model: 'gemma-4-31b',
     type: 'openai'
   },
-
   github_mistral: {
     name: 'GitHub (Mistral)',
     url: 'https://models.github.ai/inference/chat/completions',
@@ -62,7 +62,6 @@ const PROVIDERS = {
     model: 'mistral-ai/mistral-small-2503',
     type: 'openai'
   },
-
   google_gemini: {
     name: 'Google · Gemini',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
@@ -91,10 +90,10 @@ const EFFORT_MAP = {
   high:   { temperature: 1.0, max_tokens: 4096 }
 }
 
-// PASTIKAN ada kata kunci "async" sebelum "function"
+// Fungsi Logger Tunggal - Bersih & Non-blocking
 async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut, latencyMs, success, errorMsg }) {
+  if (!supabaseUrl || !supabaseKey) return
   try {
-    // Karena lo pakai supabase-js client di atas, mending pakai syntax ini biar rapi dan aman
     const { error } = await supabase.from('usage_logs').insert([{
       provider: provider || 'unknown',
       model: model || 'unknown',
@@ -108,42 +107,10 @@ async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut
     }]);
 
     if (error) {
-      console.error('Supabase Database Error:', error.message, error.details);
+      console.error('Supabase Database Error:', error.message, error.details)
     }
   } catch (err) {
-    console.error('Supabase log exception:', err.message);
-  }
-}
-
-
-{
-  const url = process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_KEY
-  if (!url || !key) return // skip kalau env belum diset
-
-  try {
-    await fetch(`${url}/rest/v1/usage_logs`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': key,
-        'Authorization': 'Bearer ' + key,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        provider,
-        model,
-        effort: effort || 'medium',
-        thinking: !!thinking,
-        tokens_in:  tokensIn  || null,
-        tokens_out: tokensOut || null,
-        latency_ms: latencyMs || null,
-        success,
-        error_msg: errorMsg || null
-      })
-    })
-  } catch (err) {
-    console.warn('[Supabase logger] Failed to log usage:', err.message)
+    console.error('Supabase log exception:', err.message)
   }
 }
 
@@ -253,10 +220,9 @@ module.exports = async function handler(req, res) {
           ...rest
         }
 
-        // Extended thinking — hanya untuk Kilo (Claude) karena anthropic-compatible
+        // Extended thinking — hanya untuk Kilo (Claude)
         if (thinking && id === 'kilo') {
           fetchBody.thinking = { type: 'enabled', budget_tokens: 5000 }
-          // Thinking butuh temperature 1 dan max_tokens besar
           fetchBody.temperature = 1
           fetchBody.max_tokens  = Math.max(fetchBody.max_tokens, 8000)
         }
@@ -292,7 +258,6 @@ module.exports = async function handler(req, res) {
       const tokensIn  = data.usage?.prompt_tokens     || null
       const tokensOut = data.usage?.completion_tokens  || null
 
-      // Log ke Supabase (non-blocking)
       logUsage({
         provider: p.name, model: p.model,
         effort, thinking,
