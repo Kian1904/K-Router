@@ -1,16 +1,21 @@
-// PROTEKSI EKSTRA: Server gak bakal crash meskipun library-nya belum terinstall
+// 1. IMPORT LIBRARY-NYA DI BARIS PALING ATAS (Ini yang dibilang hilang sama AI Supabase)
+const { createClient } = require('@supabase/supabase-js');
+
+// 2. AMBIL ENV VARIABLES
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+// 3. INISIALISASI CLIENT SECARA AMAN
 let supabase = null;
-try {
-  const { createClient } = require('@supabase/supabase-js');
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-  
-  if (supabaseUrl && supabaseKey) {
+if (supabaseUrl && supabaseKey) {
+  try {
     supabase = createClient(supabaseUrl, supabaseKey);
+  } catch (e) {
+    console.warn('[Supabase Setup] Gagal membuat client:', e.message);
   }
-} catch (e) {
-  console.warn('[Supabase Setup Warning] Library @supabase/supabase-js belum siap atau error:', e.message);
 }
+
+// ... Sisa kode PROVIDERS dan fungsi handler ke bawah tetap sama seperti file utuh yang gua kasih sebelumnya ...
 
 const PROVIDERS = {
   groq: {
