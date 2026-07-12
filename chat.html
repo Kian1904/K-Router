@@ -439,6 +439,15 @@
   <button class="icon-btn" id="clear-btn" title="Clear chat">clear</button>
 </header>
 
+<select id="effort-select" style="background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.78rem; padding: 0.35rem 0.5rem; outline: none; cursor: pointer; font-family: inherit;">
+    <option value="low">⚡ Low Effort</option>
+    <option value="medium" selected>⚖️ Medium Effort</option>
+    <option value="high">🧠 High Effort</option>
+  </select>
+
+  <button class="icon-btn" id="clear-btn" title="Clear chat">clear</button>
+</header>
+  
 <div id="compare-tabs">
   <button class="tab-btn active" id="tab-a-btn">Model A</button>
   <button class="tab-btn" id="tab-b-btn">Model B</button>
@@ -499,6 +508,7 @@
   const inputEl = document.getElementById('input')
   const sendBtn = document.getElementById('send')
   const providerSelect = document.getElementById('provider-select')
+  const effortSelect = document.getElementById('effort-select')
   const signalEl = document.getElementById('signal')
   const providerLabel = document.getElementById('provider-label')
   const fileInjector = document.getElementById('file-injector')
@@ -734,11 +744,18 @@
     targetContainer.scrollTop = targetContainer.scrollHeight
     return div
   }
-
-  async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
+async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
     const thinking = addMsg('ai', '', { thinking: true, target: targetContainer })
     try {
-      const payload = { ...bodyPayload };
+      // Ambil nilai effort saat ini dari dropdown UI
+      const currentEffort = effortSelect.value;
+      
+      // Gabungkan payload bawaan dengan parameter effort
+      const payload = { 
+        ...bodyPayload,
+        effort: currentEffort
+      };
+      
       if (provider) payload.provider = provider;
 
       const res = await fetch(CHAT_ENDPOINT, {
