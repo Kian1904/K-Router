@@ -11,7 +11,6 @@ if (supabaseUrl && supabaseKey) {
   } catch (e) {
     console.error('Gagal inisialisasi Supabase Client:', e.message)
   }
-}
 
 const PROVIDERS = {
   groq: {
@@ -100,7 +99,11 @@ const EFFORT_MAP = {
 
 // Fungsi Logger Tunggal - Bersih & Non-blocking
 async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut, latencyMs, success, errorMsg }) {
-  if (!supabaseUrl || !supabaseKey) return
+    if (!supabase) {
+    console.warn('[Supabase Logger] Dicancel karena client belum siap / env kosong.');
+    return;
+    }
+
   try {
     const { error } = await supabase.from('usage_logs').insert([{
       provider: provider || 'unknown',
