@@ -94,21 +94,26 @@ const EFFORT_MAP = {
 // ── Supabase logger (fire-and-forget, gak block response) ──
 async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut, latencyMs, success, errorMsg }) {
   try {
-    await supabase.from('usage_logs').insert([{
-      provider,
-      model,
+    const { data, error } = await supabase.from('usage_logs').insert([{
+      provider: provider || 'unknown',
+      model: model || 'unknown',
       effort: effort || 'medium',
-      thinking: thinking || false,
-      tokens_in: tokensIn,     // Di-map ke nama kolom SQL lo
-      tokens_out: tokensOut,   // Di-map ke nama kolom SQL lo
-      latency_ms: latencyMs,   // Di-map ke nama kolom SQL lo
-      success,
-      error_msg: errorMsg      // Di-map ke nama kolom SQL lo
+      thinking: Boolean(thinking), // Paksa jadi true/false asli
+      tokens_in: tokensIn ? parseInt(tokensIn) : null,
+      tokens_out: tokensOut ? parseInt(tokensOut) : null,
+      latency_ms: latencyMs ? parseInt(latencyMs) : null,
+      success: success === undefined ? true : Boolean(success),
+      error_msg: errorMsg || null
     }]);
+
+    if (error) {
+      // Ini bakal nampilin eror asli dari Supabase di log Vercel lo!
+      console.error('Supabase Database Error:', error.message, error.details);
+    }
   } catch (err) {
-    console.error('Supabase log error:', err.message);
+    console.error('Supabase log exception:', err.message);
   }
-} 
+}
 
 {
   const url = process.env.SUPABASE_URL
