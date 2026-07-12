@@ -236,12 +236,13 @@ module.exports = async function handler(req, res) {
       if (!response.ok) {
         const errorBody = await response.text();
         console.error(`[${p.name}] ${response.status}:`, errorBody);
-
-        logUsage({
-          provider: p.name, model: p.model,
-          effort, thinking, latencyMs,
-          success: false, errorMsg: `HTTP ${response.status}`
-        });
+        
+  await logUsage({
+      provider: p.name, model: p.model,
+      effort, thinking, latencyMs,
+      success: false, errorMsg: `HTTP ${response.status}`
+     });
+        
         continue;
       }
 
@@ -254,12 +255,12 @@ module.exports = async function handler(req, res) {
       const tokensIn  = data.usage?.prompt_tokens     || null;
       const tokensOut = data.usage?.completion_tokens  || null;
 
-      logUsage({
-        provider: p.name, model: p.model,
-        effort, thinking,
-        tokensIn, tokensOut, latencyMs,
-        success: true
-      });
+  await logUsage({
+      provider: p.name, model: p.model,
+      effort, thinking,
+      tokensIn, tokensOut, latencyMs,
+      success: true
+     });
 
       console.log(`[${p.name}] OK — in: ${tokensIn}, out: ${tokensOut}, ${latencyMs}ms`);
 
@@ -275,11 +276,11 @@ module.exports = async function handler(req, res) {
       const latencyMs = Date.now() - startTime;
       console.error(`[${p.name}]`, err.message);
 
-      logUsage({
-        provider: p.name, model: p.model,
-        effort, thinking, latencyMs,
-        success: false, errorMsg: err.message
-      });
+  await logUsage({
+      provider: p.name, model: p.model,
+      effort, thinking, latencyMs,
+      success: false, errorMsg: err.message
+     });
     }
   }
 
