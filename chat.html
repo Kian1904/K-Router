@@ -7,26 +7,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 <style>
   :root {
-    --canvas: #FBFBFA;
-    --surface: #FFFFFF;
-    --border: #EAEAEA;
-    --text: #111111;
-    --muted: #787774;
-    --accent: #2F6C9F;
-
-    --user-bubble-bg: #111111;
-    --user-bubble-text: #FFFFFF;
-    --ai-bubble-bg: #F3F3F2;
-    --ai-bubble-text: #111111;
-
-    --pale-green-bg: #EDF3EC;
-    --pale-green-text: #346538;
-    --pale-blue-bg: #E1F3FE;
-    --pale-blue-text: #1F6C9F;
-    --pale-red-bg: #FDEBEC;
-    --pale-red-text: #9F2F2D;
-    --pale-yellow-bg: #FBF3DB;
-    --pale-yellow-text: #956400;
+    --canvas:    #f9fbf2;
+    --meadow:    #eff2e5;
+    --ink:       #130e30;
+    --slate:     #5f5c6e;
+    --border:    rgba(19,14,48,0.10);
+    --surface:   #ffffff;
+    --border-ui: #eaeaea;
+    --text:      #111111;
+    --muted:     #787774;
+    --green-bg:  #edf3ec; --green-tx: #346538;
+    --red-bg:    #fdebec; --red-tx:   #9f2f2d;
+    --yellow-bg: #fbf3db; --yellow-tx:#956400;
+    --blue-bg:   #e1f3fe; --blue-tx:  #1f6c9f;
+    --pill:      1440px;
+    --radius:    12px;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,15 +29,22 @@
   body {
     background: var(--canvas);
     color: var(--text);
-    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
     height: 100dvh;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     overflow: hidden;
   }
-
+  
+  .logo {
+    font-family: 'Hedvig Letters Serif', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  
   .app-layout {
     display: flex;
     width: 100%;
@@ -233,9 +235,37 @@
   #setup.hidden { display: none; }
   #token-input { width: 100%; max-width: 320px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.9rem; font-family: 'SF Mono', monospace; outline: none; }
 
-  @media (min-width: 768px) { #compare-tabs { display: none !important; } .chat-view { display: flex !important; width: 50%; } }
-  @media (max-width: 767px) { #sidebar { display: none; } .app-container { border-left: none; border-right: none; } #view-b.active-tab { display: flex !important; width: 100%; } #view-a.active-tab { display: flex !important; width: 100%; } #view-a:not(.active-tab) { display: none !important; } #view-b:not(.active-tab) { display: none !important; } }
-</style>
+  @media (min-width: 768px) {
+    #compare-tabs { display: none !important; }
+    .chat-view { display: flex !important; width: 50%; }
+  }
+
+  @media (max-width: 767px) {
+    #menu-toggle-btn { display: block !important; } /* Munculin tombol ☰ di HP */
+    
+    /* Ubah sidebar jadi melayang di HP */
+    #sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 200;
+      transform: translateX(-100%); /* Sembunyikan di luar layar kiri */
+      transition: transform 0.2s ease-in-out;
+      box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+      width: 260px;
+    }
+    
+    /* Class tambahan pas sidebar aktif di HP */
+    #sidebar.mobile-open {
+      transform: translateX(0);
+    }
+
+    .app-container { border-left: none; border-right: none; }
+    #view-b.active-tab { display: flex !important; width: 100%; }
+    #view-a.active-tab { display: flex !important; width: 100%; }
+    #view-a:not(.active-tab) { display: none !important; }
+    #view-b:not(.active-tab) { display: none !important; }
+  }
+  </style>
 </head>
 <body>
 
@@ -267,12 +297,13 @@
       </div>
     </div>
 
-    <header>
-      <button class="icon-btn" onclick="window.location.href='dashboard.html'" title="Ke Dashboard">←</button>
-      <span class="logo">K'sRouter</span>
-      <div class="signal" id="signal">
-        <div class="signal-dot"></div>
-        <span id="provider-label">idle</span>
+   <header>
+  <!-- Tombol Menu untuk HP (muncul di layar kecil) -->
+  <button class="icon-btn" id="menu-toggle-btn" style="display: none; font-size: 1.1rem; padding: 0.2rem 0.6rem;">☰</button>
+  <!-- Tombol Back ke Dashboard -->
+  <button class="icon-btn" onclick="window.location.href='dashboard.html'" title="Ke Dashboard">←</button>
+  <span class="logo">K'sRouter</span>
+  ...
       </div>
       <div class="spacer"></div>
       <span id="progress-pct" class="pct-counter">0%</span>
@@ -319,24 +350,62 @@
     </div>
 
     <div class="footer-container">
-      <footer>
+    <footer style="background: transparent; border: none; max-width: 760px; width: 100%; margin: 0 auto; padding: 1rem 1.25rem 2rem;">
+  <div class="input-container" style="background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 0.5rem 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); width: 100%;">
+    
+    <textarea id="input" placeholder="Chat with K's Router... atau /search query" rows="1" style="width: 100%; background: transparent; border: none; color: var(--text); padding: 0.5rem 0.5rem 0; font-size: 0.95rem; font-family: inherit; resize: none; min-height: 40px; max-height: 160px; outline: none; line-height: 1.5;"></textarea>
+    
+    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 0.25rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
         <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
-        <button class="icon-btn" id="upload-btn" type="button" title="Inject file ke prompt">📎</button>
-        <select id="effort-select">
-          <option value="low">Low</option>
-          <option value="medium" selected>Medium</option>
-          <option value="high">High</option>
+        <button id="upload-btn" type="button" title="Inject file" style="background: rgba(19,14,48,0.05); border: none; color: var(--ink); cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: background 0.15s;">+</button>
+        
+        <select id="effort-select" style="background: rgba(19,14,48,0.04); border: none; border-radius: 16px; color: var(--ink); font-size: 0.78rem; padding: 0.35rem 0.75rem; font-weight: 500; outline: none; cursor: pointer; font-family: inherit;">
+          <option value="low">😴 Low</option>
+          <option value="medium" selected>😮‍💨 Medium</option>
+          <option value="high">😬 High</option>
         </select>
-        <textarea id="input" placeholder="Pesan..." rows="1"></textarea>
-        <button id="send" title="Kirim">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-        </button>
-      </footer>
+
+        <span id="file-preview-badge" style="display: none; font-size: 0.75rem; background: var(--blue-bg); color: var(--blue-tx); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+      </div>
+
+      <button id="send" style="background: var(--ink); color: #FFFFFF; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s;" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+      </button>
+    </div>
+
+  </div>
+    </footer>
     </div>
   </div>
 </div>
 
 <script>
+ const menuToggleBtn = document.getElementById('menu-toggle-btn');
+  const sidebarEl = document.getElementById('sidebar');
+
+  // Klik tombol ☰ buat buka/tutup
+  menuToggleBtn.onclick = (e) => {
+    e.stopPropagation();
+    sidebarEl.classList.toggle('mobile-open');
+  };
+
+  // Kalau klik di luar sidebar pas lagi kebuka di HP, otomatis tutup otomatis
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth < 768 && sidebarEl.classList.contains('mobile-open')) {
+      if (!sidebarEl.contains(e.target) && e.target !== menuToggleBtn) {
+        sidebarEl.classList.remove('mobile-open');
+      }
+    }
+  });
+
+  // Modifikasi fungsi loadSessionChat bawaan lo agar otomatis nutup sidebar setelah ganti chat di HP
+  const originalLoadSessionChat = loadSessionChat;
+  loadSessionChat = function(sid) {
+    originalLoadSessionChat(sid);
+    sidebarEl.classList.remove('mobile-open'); // Tutup laci setelah pilih history
+  };
+  
   const CHAT_ENDPOINT = '/api/chat'
   const SEARCH_ENDPOINT = '/api/search'
 
@@ -540,113 +609,144 @@
 
   uploadBtn.onclick = () => { fileInjector.click() }
 
+  let attachedFileContent = "";
+  let attachedFileName = "";
+
+  // Handle upload file tanpa ngerusak textarea
   fileInjector.addEventListener('change', async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) { addMsg('error', 'File kegedean, bro! Maksimal 2MB.', { target: messagesEl }); return; }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File kegedean, bro! Maksimal 2MB.');
+      fileInjector.value = ''
+      return
+    }
     try {
-      const content = await file.text()
-      inputEl.value = `Tolong identifikasi dan fix bug di file berikut ini.\n\n[Nama File]: ${file.name}\n[Isi File]:\n\`\`\`\n${content}\n\`\`\`\n\nIMPORTANT: Perbaiki kodenya.`
-      inputEl.style.height = '38px'; inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'; inputEl.focus();
-    } catch (err) { addMsg('error', 'Failed to read file: ' + err.message, { target: messagesEl }); }
-    fileInjector.value = ''
+      attachedFileContent = await file.text()
+      attachedFileName = file.name
+      
+      // Munculin indikator file kecil di atas bar input
+      const badge = document.getElementById('file-preview-badge');
+      badge.textContent = `📄 ${file.name}`;
+      badge.style.display = 'block';
+    } catch (err) {
+      alert('Gagal membaca file: ' + err.message);
+    }
+    fileInjector.value = '';
+    updateSendButtonState();
   })
 
-  function setSignal(state, label) {
-    if (state === 'routing') { signalEl.classList.add('on'); providerLabel.textContent = 'routing...'; startProgress(); }
-    else if (state === 'provider') { signalEl.classList.add('on'); providerLabel.textContent = label; stopProgress(); }
-    else { signalEl.classList.remove('on'); providerLabel.textContent = 'idle'; stopProgress(); }
+  function updateSendButtonState() {
+    sendBtn.disabled = !(inputEl.value.trim() || attachedFileContent);
   }
+  inputEl.addEventListener('input', updateSendButtonState);
 
-  function attachDownloadButtons(container, rawText) {
-    const preBlocks = container.querySelectorAll('pre');
-    const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
-    let match, idx = 0;
-    while ((match = codeBlockRegex.exec(rawText)) !== null) {
-      const lang = match[1] || 'txt'; const rawCode = match[2]; const targetPre = preBlocks[idx];
-      if (targetPre) {
-        let ext = '.' + lang;
-        if (lang === 'js' || lang === 'javascript') ext = '.js';
-        if (lang === 'py' || lang === 'python') ext = '.py';
-        const actionsDiv = document.createElement('div'); actionsDiv.className = 'msg-actions';
-        const dlBtn = document.createElement('button'); dlBtn.className = 'action-btn dl-btn'; dlBtn.textContent = `💾 download code${ext}`;
-        dlBtn.onclick = () => {
-          const blob = new Blob([rawCode], { type: 'text/plain' });
-          const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `output_code_${Date.now()}${ext}`;
-          document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        };
-        actionsDiv.appendChild(dlBtn); targetPre.parentNode.insertBefore(actionsDiv, targetPre.nextSibling);
-      }
-      idx++;
-    }
-  }
-
+  // Fungsi Modifikasi addMsg dengan Fitur File Box & Edit Pesan
   function addMsg(role, content, opts = {}) {
     const targetContainer = opts.target || messagesEl;
     if (targetContainer === messagesEl) emptyEl.style.display = 'none';
-    if (opts.thinking) return null;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = `msg-wrapper ${role === 'user' ? 'user-align' : 'ai-align'}`;
+    const div = document.createElement('div')
+    div.className = 'msg'
+    div.setAttribute('data-role', role);
 
-    const meta = document.createElement('div'); meta.className = 'msg-meta';
-    const tag = document.createElement('span'); tag.className = 'tag ' + role;
-    tag.textContent = role === 'user' ? 'you' : role === 'error' ? 'error' : role === 'search' ? 'search' : 'ai';
-    meta.appendChild(tag);
+    const meta = document.createElement('div')
+    meta.className = 'msg-meta'
+
+    const tag = document.createElement('span')
+    tag.className = 'tag ' + role
+    tag.textContent = role === 'user' ? 'you' : role === 'error' ? 'error' : role === 'search' ? 'search' : 'ai'
+    meta.appendChild(tag)
 
     if (opts.provider) {
-      const pSpan = document.createElement('span'); pSpan.className = 'msg-provider'; pSpan.textContent = opts.provider;
-      meta.appendChild(pSpan);
+      const pSpan = document.createElement('span')
+      pSpan.className = 'msg-provider'
+      pSpan.textContent = opts.provider
+      meta.appendChild(pSpan)
     }
 
-    const ts = document.createElement('span'); ts.className = 'msg-ts'; ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    meta.appendChild(ts); wrapper.appendChild(meta);
+    const ts = document.createElement('span')
+    ts.className = 'msg-ts'
+    ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    meta.appendChild(ts)
+    div.appendChild(meta)
 
-    const div = document.createElement('div');
-    div.className = 'msg';
-    if (role === 'error') div.classList.add('error-bubble');
-    if (role === 'search') div.classList.add('search-bubble');
-
-    let finalContent = content;
-    if (role === 'ai' && content.includes('<think>') && content.includes('</think>')) {
-      const parts = content.split('</think>');
-      const thoughtText = parts[0].replace('<think>', '').trim();
-      finalContent = parts[1] ? parts[1].trim() : '';
-      if (thoughtText) {
-        const details = document.createElement('details'); details.className = 'thought-box'; details.open = false;
-        const summary = document.createElement('summary'); summary.textContent = '💭 Thinking Process (click to expand)';
-        const thoughtDiv = document.createElement('div'); thoughtDiv.className = 'thought-content'; thoughtDiv.textContent = thoughtText;
-        details.appendChild(summary); details.appendChild(thoughtDiv); div.appendChild(details);
-      }
+    // JIKA ADA ATTACHMENT FILE (Tampilkan Kotak File Rapi, Bukan Code Dump)
+    if (opts.fileName) {
+      const fileBox = document.createElement('div');
+      fileBox.style = "display: inline-flex; align-items: center; gap: 8px; background: var(--meadow); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; color: var(--ink); font-weight: 500;";
+      fileBox.innerHTML = `<span>📄</span> <div style="display:flex; flex-direction:column;"><strong style="font-size:12px;">${opts.fileName}</strong><span style="font-size:10px; color:var(--muted)">Attached File</span></div>`;
+      div.appendChild(fileBox);
     }
 
-    const contentDiv = document.createElement('div'); contentDiv.className = 'msg-content';
-    if (role === 'search') {
+    const contentDiv = document.createElement('div')
+    contentDiv.className = 'msg-content'
+
+    if (opts.thinking) {
+      contentDiv.innerHTML = '<span class="dots"><span>.</span><span>.</span><span>.</span></span>'
+    } else if (role === 'search') {
+      // (Tetap simpan logik search lama lo di sini)
       if (content.answer) {
         const ans = document.createElement('div'); ans.className = 'search-answer'; ans.textContent = content.answer; contentDiv.appendChild(ans);
       }
       const links = document.createElement('div'); links.className = 'search-results';
       content.results.forEach(r => {
         const a = document.createElement('a'); a.className = 'search-link'; a.href = r.url; a.target = '_blank'; a.textContent = r.title; links.appendChild(a);
-      });
-      contentDiv.appendChild(links);
+      })
+      contentDiv.appendChild(links)
     } else {
-      contentDiv.innerHTML = marked.parse(finalContent || '...');
-    }
-    div.appendChild(contentDiv);
-
-    if (role === 'ai') {
-      const actions = document.createElement('div'); actions.className = 'msg-actions';
-      const copyBtn = document.createElement('button'); copyBtn.className = 'action-btn'; copyBtn.textContent = 'copy';
-      copyBtn.onclick = () => { navigator.clipboard.writeText(finalContent); copyBtn.textContent = 'copied'; setTimeout(() => { copyBtn.textContent = 'copy' }, 1500); };
-      actions.appendChild(copyBtn); div.appendChild(actions);
-      if (finalContent.includes('```')) { setTimeout(() => attachDownloadButtons(contentDiv, finalContent), 50); }
+      contentDiv.innerHTML = marked.parse(content)
     }
 
-    wrapper.appendChild(div); targetContainer.appendChild(wrapper);
-    targetContainer.scrollTop = targetContainer.scrollHeight;
-    return wrapper;
-  }
+    div.appendChild(contentDiv)
+
+    // ACTION BUTTONS (Copy, Download, & EDIT UNTUK USER)
+    const actions = document.createElement('div')
+    actions.className = 'msg-actions'
+
+    if (role === 'ai' && !opts.thinking) {
+      const copyBtn = document.createElement('button')
+      copyBtn.className = 'action-btn'
+      copyBtn.textContent = 'copy'
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(content)
+        copyBtn.textContent = 'copied'
+        setTimeout(() => { copyBtn.textContent = 'copy' }, 1500)
+      }
+      actions.appendChild(copyBtn)
+      div.appendChild(actions)
+
+      if (content.includes('```')) {
+        setTimeout(() => attachDownloadButtons(contentDiv, content), 50);
+      }
+    } else if (role === 'user') {
+      // Fitur Edit Pesan User
+      const editBtn = document.createElement('button')
+      editBtn.className = 'action-btn'
+      editBtn.textContent = 'edit'
+      editBtn.onclick = () => {
+        inputEl.value = content;
+        inputEl.focus();
+        // Hapus sisa chat di bawah pesan ini agar chain history sinkron kembali saat dikirim ulang
+        const nodes = Array.from(targetContainer.children);
+        const idx = nodes.indexOf(div);
+        if (idx !== -1) {
+          while (targetContainer.children.length > idx) {
+            targetContainer.removeChild(targetContainer.lastChild);
+          }
+          // Potong array history sync ke indeks pesan ini
+          history = history.slice(0, idx);
+        }
+        updateSendButtonState();
+      }
+      actions.appendChild(editBtn)
+      div.appendChild(actions)
+    }
+
+    targetContainer.appendChild(div)
+    targetContainer.scrollTop = targetContainer.scrollHeight
+    return div
+      }
 
   async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
     try {
@@ -678,43 +778,65 @@
     }
   }
 
-  async function send() {
-    const text = inputEl.value.trim()
-    if (!text) return
+ async function send() {
+    let text = inputEl.value.trim()
+    if (!text && !attachedFileContent) return
 
-    inputEl.value = ''; inputEl.style.height = '38px';
-    closeLimitScreen();
+    let displayBody = text;
+    let fullPrompt = text;
 
-    // Pastikan ada sesi aktif
-    if (!currentSessionId) initNewSession();
-    let currentHistory = sessions[currentSessionId].history;
+    // Gabungkan text dan file secara sistematis ke API, tapi UI tetap bersih
+    if (attachedFileContent) {
+      fullPrompt = `[Attached File]: ${attachedFileName}\n\`\`\`\n${attachedFileContent}\n\`\`\`\n\n${text || 'Tolong analisa file ini.'}`;
+      if (!text) displayBody = `Menganalisa file ${attachedFileName}`;
+    }
 
-    currentHistory.push({ role: 'user', content: text });
-    sendBtn.disabled = true;
-    const mode = providerSelect.value;
+    // Reset input states & preview UI
+    inputEl.value = ''
+    inputEl.style.height = '42px'
+    document.getElementById('file-preview-badge').style.display = 'none';
+
+    if (text.startsWith('/search ')) {
+      await doSearch(text.slice(8).trim())
+      return
+    }
+
+    sendBtn.disabled = true
+    history.push({ role: 'user', content: fullPrompt })
+
+    const mode = providerSelect.value
 
     if (mode === 'compare') {
-      addMsg('user', text, { target: messagesEl }); addMsg('user', text, { target: messagesBEl });
-      tabABtn.textContent = "DEEPSEEK"; tabBBtn.textContent = "GPT";
-      setSignal('routing');
+      addMsg('user', displayBody, { target: messagesEl, fileName: attachedFileName })
+      addMsg('user', displayBody, { target: messagesBEl, fileName: attachedFileName })
+      
+      tabABtn.textContent = "NVIDIA DeepSeek";
+      tabBBtn.textContent = "FlatKey GPT";
+      setSignal('routing')
+
       const [replyA, replyB] = await Promise.all([
-        fetchModelResponse('nvidia_deepseek', { messages: currentHistory }, messagesEl, 'tab-a-btn'),
-        fetchModelResponse('flatkey', { messages: currentHistory }, messagesBEl, 'tab-b-btn')
+        fetchModelResponse('nvidia_deepseek', { messages: history }, messagesEl, 'tab-a-btn'),
+        fetchModelResponse('flatkey', { messages: history }, messagesBEl, 'tab-b-btn')
       ]);
-      if (replyA) currentHistory.push({ role: 'assistant', content: replyA });
-      setSignal('idle'); sendBtn.disabled = false;
+
+      if (replyA) history.push({ role: 'assistant', content: replyA })
     } else {
-      addMsg('user', text, { target: messagesEl });
-      setSignal('routing');
-      const reply = await fetchModelResponse(mode, { messages: currentHistory }, messagesEl);
+      addMsg('user', displayBody, { target: messagesEl, fileName: attachedFileName })
+      setSignal('routing')
+      const reply = await fetchModelResponse(mode, { messages: history }, messagesEl)
       if (reply) {
-        currentHistory.push({ role: 'assistant', content: reply });
-        setSignal('provider', mode || 'auto');
+        history.push({ role: 'assistant', content: reply })
+        setSignal('provider', mode || 'auto')
       } else {
-        setSignal('idle');
+        setSignal('idle')
       }
-      sendBtn.disabled = false;
     }
+
+    // Clear memory attachment setelah terkirim
+    attachedFileContent = "";
+    attachedFileName = "";
+    sendBtn.disabled = true
+ }
     
     // Update Judul Sesi Otomatis dari Pesan Pertama agar Estetik
     if (currentHistory.length <= 2) {
