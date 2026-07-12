@@ -30,15 +30,15 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { range = '24h', limit = 50 } = req.query
-    const hours = range === '7d' ? 168 : range === '30d' ? 720 : 24
-    const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
-
-    const { data, error } = await supabase
-      .from('usage_logs')
-      .select('provider, model, success, latency_ms, tokens_in, tokens_out, created_at')
-      .gte('created_at', cutoff)
-      .order('created_at', { ascending: false })
+   const { range = '24h', limit = 50 } = req.query
+   const hours = range === '7d' ? 168 : range === '30d' ? 720 : 24
+   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
+  
+   const { data, error } = await supabase
+    .from('usage_logs')
+    .select('provider, model, success, latency_ms, tokens_in, tokens_out, created_at, effort') // Tambahin effort di sini biar trackable
+    .gte('created_at', cutoff)
+    .order('created_at', { ascending: false })
 
     if (error) throw new Error(error.message)
 
