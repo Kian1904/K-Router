@@ -15,7 +15,6 @@ const PROVIDERS = {
     model: 'openai/gpt-4o-mini',
     type: 'openai'
   },
-  // 🌟 OPSI PLUS BARU KITA SUNTIK DI SINI
   qwen_plus: {
     name: 'Qwen 3.7 (Plus)',
     url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
@@ -29,8 +28,6 @@ const PROVIDERS = {
     key: 'DASHSCOPE_API_KEY',
     model: 'qwen3.7-max',
     type: 'alibaba'
-  },
-  // ... sisa model lainnya biarkan tetap utuh di bawahnya ...
   },
   nvidia_deepseek: {
     name: 'NVIDIA NIM (DeepSeek)',
@@ -76,7 +73,7 @@ const PROVIDERS = {
   }
 };
 
-// Urutan fallback otomatis (Cascade) diambil langsung dari key di atas
+// Menghasilkan array otomatis berisi semua key di atas untuk fallback system
 const CASCADE = Object.keys(PROVIDERS);
 
 module.exports = { PROVIDERS, CASCADE };
