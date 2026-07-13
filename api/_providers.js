@@ -17,14 +17,14 @@ const PROVIDERS = {
   },
   qwen_plus: {
     name: 'Qwen 3.7 (Plus)',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+    url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
     key: 'DASHSCOPE_API_KEY',
     model: 'qwen3.7-plus',
     type: 'alibaba'
   },
   qwen_max: {
     name: 'Qwen 3.7 (Max)',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+    url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
     key: 'DASHSCOPE_API_KEY',
     model: 'qwen3.7-max',
     type: 'alibaba'
