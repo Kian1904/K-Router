@@ -26,95 +26,6 @@ async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut
   }
 }
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
-
-  const { provider, messages, input } = req.body || {};
-  const userToken = req.headers.authorization;
-
-  // Validasi token internal aplikasi lo
-  if (!userToken || userToken === "Bearer null" || userToken.trim() === "") {
-    return res.status(401).json({ error: "Akses ditolak." });
-  }
-
-  const userPrompt = input || messages[messages.length - 1]?.content || "";
-
-  // ========================================================
-  // RUTE 1: JALUR KHUSUS PABRIK QWEN (ALIBABA DASHSCOPE)
-  // ========================================================
-  if (provider === 'qwen3.7-plus' || provider === 'qwen3.7-max') {
-    try {
-      const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: provider,
-          messages: [{ role: "user", content: userPrompt }],
-          temperature: 0.7
-        })
-      });
-
-      if (!response.ok) throw new Error(`DashScope gagal: ${response.status}`);
-      const data = await response.json();
-      
-      return res.status(200).json({
-        _provider: provider,
-        choices: [{ message: { role: "assistant", content: data.choices[0].message.content } }]
-      });
-    } catch (err) {
-      return res.status(500).json({ error: `Pabrik Qwen Error: ${err.message}` });
-    }
-  }
-
-  // ========================================================
-  // RUTE 2: JALUR KHUSUS PABRIK DEEPSEEK RESMI
-  // ========================================================
-  if (provider === 'deepseek-chat' || provider === 'deepseek-reasoning') {
-    try {
-      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}` // Kunci rahasia dari platform DeepSeek lo
-        },
-        body: JSON.stringify({
-          model: provider, // 'deepseek-chat' (V3) atau 'deepseek-reasoning' (R1)
-          messages: [{ role: "user", content: userPrompt }],
-          temperature: provider === 'deepseek-reasoning' ? 0.6 : 0.7 // R1 butuh temp sedikit lebih rendah biar stabil
-        })
-      });
-
-      if (!response.ok) throw new Error(`DeepSeek gagal: ${response.status}`);
-      const data = await response.json();
-      
-      // Ambil teks chat reguler dan simpan teks reasoning (berpikir) jika ada (khusus R1)
-      const replyContent = data.choices[0].message.content;
-      const reasoningContent = data.choices[0].message.reasoning_content || "";
-
-      return res.status(200).json({
-        _provider: provider,
-        choices: [{ 
-          message: { 
-            role: "assistant", 
-            content: replyContent,
-            reasoning_content: reasoningContent // Langsung dioper ke UI balok <think> lo
-          } 
-        }]
-      });
-    } catch (err) {
-      return res.status(500).json({ error: `Pabrik DeepSeek Error: ${err.message}` });
-    }
-  }
-
-  // ========================================================
-  // JALUR LAMA LO: (Auto Router / Nvidia / GitHub GPT, dll)
-  // ========================================================
-  // ... Tempel sisa kode penanganan lama lo di sini ...
-                                   }
-
 function convertToGoogleFormat(messages) {
   return messages.map(msg => ({
     role: msg.role === 'user' ? 'user' : 'model',
@@ -134,6 +45,7 @@ function convertGoogleResponse(googleResponse) {
   };
 }
 
+// MENGGUNAKAN SATU EXPORT HANDLER UTAMA AGAR TIDAK TABRAKAN
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -142,16 +54,107 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // 1. Validasi Token Gerbang Keamanan K's Router
   const auth = req.headers.authorization;
-  if (auth !== 'Bearer ' + process.env.BEARER_TOKEN) {
+  if (!auth || auth !== 'Bearer ' + process.env.BEARER_TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { messages = [], provider, effort = 'medium', thinking = false, ...rest } = req.body;
-  let selected = provider;
-  const lastUserMessage = messages[messages.length - 1]?.content || '';
+  const { messages = [], provider, effort = 'medium', thinking = false, input, ...rest } = req.body;
+  const lastUserMessage = input || messages[messages.length - 1]?.content || '';
+  const effortParams = EFFORT_MAP[effort] || EFFORT_MAP.medium;
+  const startTime = Date.now();
 
-  // Smart Auto Routing Engine
+  // ========================================================
+  // JALUR KHUSUS 1: LANGSUNG KE PABRIK QWEN ALIBABA
+  // ========================================================
+  if (provider === 'qwen3.7-plus' || provider === 'qwen3.7-max') {
+    try {
+      const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: provider,
+          messages: [{ role: "user", content: lastUserMessage }],
+          temperature: effortParams.temperature,
+          max_tokens: effortParams.max_tokens
+        })
+      });
+
+      const latencyMs = Date.now() - startTime;
+      if (!response.ok) throw new Error(`DashScope HTTP ${response.status}`);
+
+      const data = await response.json();
+      const reply = data.choices[0].message.content;
+
+      await logUsage({ provider: 'Qwen Factory', model: provider, effort, thinking, latencyMs, success: true });
+
+      return res.status(200).json({
+        _provider: 'Qwen Factory',
+        _model: provider,
+        _latencyMs: latencyMs,
+        choices: [{ message: { role: "assistant", content: reply } }]
+      });
+    } catch (err) {
+      const latencyMs = Date.now() - startTime;
+      await logUsage({ provider: 'Qwen Factory', model: provider, effort, thinking, latencyMs, success: false, errorMsg: err.message });
+      // Jika pabrik eror, biarkan dia lolos ke sistem cascade di bawahnya
+    }
+  }
+
+  // ========================================================
+  // JALUR KHUSUS 2: LANGSUNG KE PABRIK DEEPSEEK RESMI
+  // ========================================================
+  if (provider === 'deepseek-chat' || provider === 'deepseek-reasoning') {
+    try {
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: provider,
+          messages: [{ role: "user", content: lastUserMessage }],
+          temperature: provider === 'deepseek-reasoning' ? 0.6 : effortParams.temperature
+        })
+      });
+
+      const latencyMs = Date.now() - startTime;
+      if (!response.ok) throw new Error(`DeepSeek HTTP ${response.status}`);
+
+      const data = await response.json();
+      const reply = data.choices[0].message.content;
+      const reasoning = data.choices[0].message.reasoning_content || "";
+
+      await logUsage({ provider: 'DeepSeek Factory', model: provider, effort, thinking, latencyMs, success: true });
+
+      return res.status(200).json({
+        _provider: 'DeepSeek Factory',
+        _model: provider,
+        _latencyMs: latencyMs,
+        choices: [{ 
+          message: { 
+            role: "assistant", 
+            content: reply,
+            reasoning_content: reasoning 
+          } 
+        }]
+      });
+    } catch (err) {
+      const latencyMs = Date.now() - startTime;
+      await logUsage({ provider: 'DeepSeek Factory', model: provider, effort, thinking, latencyMs, success: false, errorMsg: err.message });
+      // Jika pabrik eror, biarkan dia lolos ke sistem cascade di bawahnya
+    }
+  }
+
+  // ========================================================
+  // ENGINE UTAMA: AUTO ROUTING & FALLBACK SYSTEM (CASCADE)
+  // ========================================================
+  let selected = provider;
   if (selected === 'auto_router' || !selected) {
     const isCodingTask = lastUserMessage.includes('.js') || lastUserMessage.includes('.html') || lastUserMessage.includes('```') || /\b(function|const|let|class)\b/i.test(lastUserMessage);
     const isWritingTask = /\b(outline|dokumen|cerita|artikel|naskah|resume)\b/i.test(lastUserMessage);
@@ -162,20 +165,18 @@ module.exports = async function handler(req, res) {
   }
 
   const targets = selected && PROVIDERS[selected] ? [selected] : CASCADE;
-  const effortParams = EFFORT_MAP[effort] || EFFORT_MAP.medium;
 
   for (const id of targets) {
     const p = PROVIDERS[id];
     if (!p) continue;
     
-    // Ambil nilai token env secara dinamis dari file master
     const apiKey = process.env[p.key];
     if (!apiKey) {
       console.warn(`[${p.name}] API key (${p.key}) blm di-set di env.`);
       continue;
     }
 
-    const startTime = Date.now();
+    const startLoopTime = Date.now();
 
     try {
       let fetchBody, fetchHeaders, fetchUrl;
@@ -201,7 +202,6 @@ module.exports = async function handler(req, res) {
           ...rest
         };
 
-        // Kilo (Claude) Reasoning budget token integration
         if (thinking && id === 'kilo') {
           fetchBody.thinking = { type: 'enabled', budget_tokens: 5000 };
           fetchBody.temperature = 1;
@@ -210,7 +210,7 @@ module.exports = async function handler(req, res) {
       }
 
       const response = await fetch(fetchUrl, { method: 'POST', headers: fetchHeaders, body: JSON.stringify(fetchBody) });
-      const latencyMs = Date.now() - startTime;
+      const latencyMs = Date.now() - startLoopTime;
 
       if (!response.ok) {
         const errorBody = await response.text();
@@ -234,7 +234,7 @@ module.exports = async function handler(req, res) {
 
       return res.status(200).json(data);
     } catch (err) {
-      const latencyMs = Date.now() - startTime;
+      const latencyMs = Date.now() - startLoopTime;
       await logUsage({ provider: p.name, model: p.model, effort, thinking, latencyMs, success: false, errorMsg: err.message });
     }
   }
