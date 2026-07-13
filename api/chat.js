@@ -45,6 +45,22 @@ function convertGoogleResponse(googleResponse) {
   };
 }
 
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error(`Timeout after ${timeoutMs}ms`);
+    }
+    throw err;
+  }
+}
+
 // MENGGUNAKAN SATU EXPORT HANDLER UTAMA AGAR TIDAK TABRAKAN
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -68,113 +84,7 @@ module.exports = async function handler(req, res) {
 // ========================================================
   // JALUR KHUSUS 1: LANGSUNG KE PABRIK QWEN ALIBABA
   // ========================================================
-  if (provider === 'qwen_max' || provider === 'qwen_plus' || provider === 'qwen3.7-max' || provider === 'qwen3.7-plus') {
-    try {
-      let targetModel = provider;
-      if (provider === 'qwen_max') targetModel = 'qwen3.7-max';
-      if (provider === 'qwen_plus') targetModel = 'qwen3.7-plus';
-
-      const formattedMessages = messages && messages.length > 0 
-        ? messages 
-        : [{ role: "user", content: lastUserMessage || "Hi" }];
-
-      const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
-        },
-        body: JSON.stringify({
-        model: targetModel,
-        messages: formattedMessages,
-        temperature: effortParams.temperature,
-        max_tokens: effortParams.max_tokens,
-        
-        // 🌟 JALAN KELUAR AMAN: Setel ke false agar akun free tier lo lolos dari blokir 403
-        // Atau pakai `thinking` jika lo mau dia dinamis ngikutin tombol dari frontend
-        enable_thinking: false 
-      })
-      });
-
-      const latencyMs = Date.now() - startTime;
-      
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`DashScope HTTP ${response.status}: ${errText}`);
-      }
-
-      const data = await response.json();
-      const reply = data.choices[0].message.content;
-      // 🌟 Ambil proses berpikir Qwen agar otomatis muncul di UI balok <think> lo!
-      const reasoning = data.choices[0].message.reasoning_content || "";
-
-      await logUsage({ provider: 'Qwen Factory', model: targetModel, effort, thinking, latencyMs, success: true });
-
-      return res.status(200).json({
-        _provider: 'Qwen Factory',
-        _model: targetModel,
-        _latencyMs: latencyMs,
-        choices: [{ 
-          message: { 
-            role: "assistant", 
-            content: reply,
-            reasoning_content: reasoning // Dilempar langsung ke UI chat.html lo
-          } 
-        }]
-      });
-    } catch (err) {
-      console.error("Detail Eror Pabrik Qwen:", err.message);
-      const latencyMs = Date.now() - startTime;
-      await logUsage({ provider: 'Qwen Factory', model: provider, effort, thinking, latencyMs, success: false, errorMsg: err.message });
-      return res.status(500).json({ error: `Jalur Kilat Qwen Gagal: ${err.message}` });
-    }
-  }
-
-  // ========================================================
-  // JALUR KHUSUS 2: LANGSUNG KE PABRIK DEEPSEEK RESMI
-  // ========================================================
-  if (provider === 'deepseek-chat' || provider === 'deepseek-reasoning') {
-    try {
-      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: provider,
-          messages: [{ role: "user", content: lastUserMessage }],
-          temperature: provider === 'deepseek-reasoning' ? 0.6 : effortParams.temperature
-        })
-      });
-
-      const latencyMs = Date.now() - startTime;
-      if (!response.ok) throw new Error(`DeepSeek HTTP ${response.status}`);
-
-      const data = await response.json();
-      const reply = data.choices[0].message.content;
-      const reasoning = data.choices[0].message.reasoning_content || "";
-
-      await logUsage({ provider: 'DeepSeek Factory', model: provider, effort, thinking, latencyMs, success: true });
-
-      return res.status(200).json({
-        _provider: 'DeepSeek Factory',
-        _model: provider,
-        _latencyMs: latencyMs,
-        choices: [{ 
-          message: { 
-            role: "assistant", 
-            content: reply,
-            reasoning_content: reasoning 
-          } 
-        }]
-      });
-    } catch (err) {
-      const latencyMs = Date.now() - startTime;
-      await logUsage({ provider: 'DeepSeek Factory', model: provider, effort, thinking, latencyMs, success: false, errorMsg: err.message });
-      // Jika pabrik eror, biarkan dia lolos ke sistem cascade di bawahnya
-    }
-  }
+  if (provider === '
 
   // ========================================================
   // ENGINE UTAMA: AUTO ROUTING & FALLBACK SYSTEM (CASCADE)
@@ -234,7 +144,7 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      const response = await fetch(fetchUrl, { method: 'POST', headers: fetchHeaders, body: JSON.stringify(fetchBody) });
+      const response = await fetchWithTimeout(fetchUrl, { method: 'POST', headers: fetchHeaders, body: JSON.stringify(fetchBody) }, 20000);
       const latencyMs = Date.now() - startLoopTime;
 
       if (!response.ok) {
