@@ -518,6 +518,16 @@
 
   if (TOKEN) setupEl.classList.add('hidden');
 
+  // Load defaults dari settings
+  const savedEffort = (localStorage.getItem('kr_default_effort') || 'medium').toLowerCase().trim()
+  if (['low', 'medium', 'high'].includes(savedEffort)) effortSelect.value = savedEffort
+
+  const savedProvider = localStorage.getItem('kr_default_provider') || 'auto_router'
+  const mappedProvider = savedProvider === 'auto_router' ? '' : savedProvider
+  if ([...providerSelect.options].some(o => o.value === mappedProvider)) {
+    providerSelect.value = mappedProvider
+  }
+
   function initNewSession() {
     const id = 'session_' + Date.now();
     sessions[id] = {
@@ -956,4 +966,4 @@
   }
 </script>
 </body>
-  </html>
+  </html>q
