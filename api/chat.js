@@ -85,13 +85,15 @@ module.exports = async function handler(req, res) {
           "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
         },
         body: JSON.stringify({
-          model: targetModel,
-          messages: formattedMessages,
-          temperature: effortParams.temperature,
-          max_tokens: effortParams.max_tokens,
-          // 🌟 KUNCI UTAMA DARI DOKUMENTASI ALIBABA:
-          enable_thinking: true 
-        })
+        model: targetModel,
+        messages: formattedMessages,
+        temperature: effortParams.temperature,
+        max_tokens: effortParams.max_tokens,
+        
+        // 🌟 JALAN KELUAR AMAN: Setel ke false agar akun free tier lo lolos dari blokir 403
+        // Atau pakai `thinking` jika lo mau dia dinamis ngikutin tombol dari frontend
+        enable_thinking: false 
+      })
       });
 
       const latencyMs = Date.now() - startTime;
