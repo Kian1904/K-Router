@@ -65,15 +65,19 @@ module.exports = async function handler(req, res) {
   const effortParams = EFFORT_MAP[effort] || EFFORT_MAP.medium;
   const startTime = Date.now();
 
-  // ========================================================
+// ========================================================
   // JALUR KHUSUS 1: LANGSUNG KE PABRIK QWEN ALIBABA
   // ========================================================
   if (provider === 'qwen_max' || provider === 'qwen_plus' || provider === 'qwen3.7-max' || provider === 'qwen3.7-plus') {
     try {
-      // Taktik mapping otomatis: jika frontend kirim key pendek, ubah jadi nama resmi pabriknya
       let targetModel = provider;
       if (provider === 'qwen_max') targetModel = 'qwen3.7-max';
       if (provider === 'qwen_plus') targetModel = 'qwen3.7-plus';
+
+      // TAKTIK AMAN: Pastikan array messages tidak kosong. Jika kosong, buatkan fallback.
+      const formattedMessages = messages && messages.length > 0 
+        ? messages 
+        : [{ role: "user", content: lastUserMessage || "Hi" }];
 
       const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
         method: "POST",
@@ -82,15 +86,20 @@ module.exports = async function handler(req, res) {
           "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
         },
         body: JSON.stringify({
-          model: targetModel, // Otomatis mengirim 'qwen3.7-max' atau 'qwen3.7-plus' sesuai pesanan dropdown
-          messages: [{ role: "user", content: lastUserMessage }],
+          model: targetModel,
+          messages: formattedMessages, // 🌟 Mengirim seluruh riwayat chat yang valid
           temperature: effortParams.temperature,
           max_tokens: effortParams.max_tokens
         })
       });
 
       const latencyMs = Date.now() - startTime;
-      if (!response.ok) throw new Error(`DashScope HTTP ${response.status}`);
+      
+      // Jika server pabrik ngasih eror, tangkap detail teks erornya buat debugging
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`DashScope HTTP ${response.status}: ${errText}`);
+      }
 
       const data = await response.json();
       const reply = data.choices[0].message.content;
@@ -104,9 +113,10 @@ module.exports = async function handler(req, res) {
         choices: [{ message: { role: "assistant", content: reply } }]
       });
     } catch (err) {
+      console.error("Detail Eror Pabrik Qwen:", err.message);
       const latencyMs = Date.now() - startTime;
       await logUsage({ provider: 'Qwen Factory', model: provider, effort, thinking, latencyMs, success: false, errorMsg: err.message });
-      // Jika pabrik eror, biarkan dia lolos ke sistem cascade di bawahnya
+      // Jika gagal, biarkan merosot ke engine cascade di bawah
     }
   }
 
