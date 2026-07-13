@@ -15,12 +15,22 @@ const PROVIDERS = {
     model: 'openai/gpt-4o-mini',
     type: 'openai'
   },
+  // 🌟 OPSI PLUS BARU KITA SUNTIK DI SINI
+  qwen_plus: {
+    name: 'Qwen 3.7 (Plus)',
+    url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+    key: 'DASHSCOPE_API_KEY',
+    model: 'qwen3.7-plus',
+    type: 'alibaba'
+  },
   qwen_max: {
     name: 'Qwen 3.7 (Max)',
     url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
     key: 'DASHSCOPE_API_KEY',
     model: 'qwen3.7-max',
     type: 'alibaba'
+  },
+  // ... sisa model lainnya biarkan tetap utuh di bawahnya ...
   },
   nvidia_deepseek: {
     name: 'NVIDIA NIM (DeepSeek)',
