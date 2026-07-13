@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — K's Router</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif:opsz@12..24&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas:    #f9fbf2;
+  --meadow:    #eff2e5;
+  --ink:       #130e30;
+  --slate:     #5f5c6e;
+  --border:    rgba(19,14,48,0.10);
+  --surface:   #ffffff;
+  --border-ui: #eaeaea;
+  --text:      #111111;
+  --muted:     #787774;
+  --green-bg:  #edf3ec; --green-tx: #346538;
+  --red-bg:    #fdebec; --red-tx:   #9f2f2d;
+  --yellow-bg: #fbf3db; --yellow-tx:#956400;
+  --blue-bg:   #e1f3fe; --blue-tx:  #1f6c9f;
+  --sidebar-w: 220px;
+  --pill:      1440px;
+  --radius:    12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+.app{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);background:var(--meadow);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 12px;position:fixed;top:0;left:0;height:100vh;z-index:100;gap:32px}
+.brand-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:4px}
+.brand-name{font-family:'Hedvig Letters Serif',serif;font-size:20px;color:var(--ink);letter-spacing:-.01em;line-height:1.15}
+.nav-section{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-label{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding:0 12px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--pill);text-decoration:none;color:var(--ink);font-size:14px;font-weight:500;transition:background .15s}
+.nav-item:hover{background:rgba(19,14,48,.06)}
+.nav-item.active{background:var(--ink);color:#fff}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{border-top:1px solid var(--border);padding-top:16px}
+.sidebar-footer a{display:flex;align-items:center;gap:10px;color:var(--slate);text-decoration:none;font-size:13px;font-weight:500;border-radius:var(--pill);padding:9px 12px;transition:background .15s,color .15s}
+.sidebar-footer a:hover{background:rgba(19,14,48,.06);color:var(--ink)}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);flex:1;padding:40px 48px;max-width:calc(100% - var(--sidebar-w))}
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:32px;gap:16px;flex-wrap:wrap}
+.page-title{font-family:'Hedvig Letters Serif',serif;font-size:32px;color:var(--ink);letter-spacing:-.32px;line-height:1.15}
+.range-pills{display:flex;gap:6px}
+.range-btn{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:6px 14px;border-radius:var(--pill);border:1px solid var(--border-ui);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
+.range-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border-ui);border-radius:var(--radius);padding:24px;opacity:0;transform:translateY(10px);animation:rise .5s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:translateY(0)}}
+.stat-label{font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+.stat-value{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:500;color:var(--ink);letter-spacing:-.5px;line-height:1}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* Section */
+.section{background:var(--surface);border:1px solid var(--border-ui);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;opacity:0;transform:translateY(10px);animation:rise .5s cubic-bezier(.16,1,.3,1) forwards}
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border-ui)}
+.section-title{font-size:14px;font-weight:600;color:var(--ink);letter-spacing:-.15px}
+.section-meta{font-size:12px;color:var(--muted)}
+
+/* Table */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:11px 24px;border-bottom:1px solid var(--border-ui);background:#fafafa}
+td{padding:12px 24px;border-bottom:1px solid var(--border-ui);font-size:13px;color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+.mono.highlight{color:var(--ink);font-weight:500}
+
+/* Badges */
+.badge{display:inline-block;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:var(--pill);white-space:nowrap}
+.badge-ok    {background:var(--green-bg);color:var(--green-tx)}
+.badge-fail  {background:var(--red-bg);  color:var(--red-tx)}
+.badge-low   {background:var(--yellow-bg);color:var(--yellow-tx)}
+.badge-medium{background:var(--blue-bg); color:var(--blue-tx)}
+.badge-high  {background:var(--red-bg);  color:var(--red-tx)}
+
+/* Token bar */
+.token-bar-wrap{display:flex;align-items:center;gap:8px}
+.token-bar-bg{flex:1;height:4px;background:var(--border-ui);border-radius:2px;max-width:80px}
+.token-bar-fill{height:4px;border-radius:2px;background:var(--ink);opacity:.3;transition:width .4s ease}
+
+/* Provider chip */
+.provider-chip{display:flex;align-items:center;gap:6px}
+.provider-dot{width:6px;height:6px;border-radius:50%;background:var(--ink);opacity:.3;flex-shrink:0}
+
+/* Auth overlay */
+.overlay{position:fixed;inset:0;background:var(--canvas);display:flex;align-items:center;justify-content:center;z-index:999}
+.overlay-box{background:var(--surface);border:1px solid var(--border-ui);border-radius:var(--radius);padding:40px;width:320px;text-align:center}
+.overlay-title{font-family:'Hedvig Letters Serif',serif;font-size:22px;color:var(--ink);margin-bottom:8px}
+.overlay-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.overlay input{width:100%;padding:10px 14px;border:1px solid var(--border-ui);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--canvas);color:var(--ink);outline:none;margin-bottom:12px}
+.overlay input:focus{border-color:var(--ink)}
+.overlay button{width:100%;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;transition:background .2s}
+.overlay button:hover{background:#1e1548}
+.overlay-err{font-size:12px;color:var(--red-tx);margin-top:8px;display:none}
+
+.table-empty{text-align:center;padding:40px 24px;color:var(--muted);font-size:13px}
+
+/* Bottom nav mobile */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--meadow);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom,8px);z-index:200}
+.bottom-nav-items{display:flex;justify-content:space-around;align-items:center}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:var(--slate);font-size:10px;font-weight:500;padding:6px 12px;border-radius:12px;min-width:56px}
+.bottom-nav-item.active{color:var(--ink)}
+.bottom-nav-item svg{opacity:.5}
+.bottom-nav-item.active svg{opacity:1}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .bottom-nav{display:block}
+  .main{margin-left:0;max-width:100%;padding:24px 16px 88px}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .stat-value{font-size:20px}
+  th,td{padding:10px 16px}
+  .page-title{font-size:24px}
+  .page-header{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:420px){.stats-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- Auth overlay -->
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-title">K's Router</div>
+    <div class="overlay-sub">Masukkan token untuk akses dashboard</div>
+    <input type="password" id="tokenInput" placeholder="Bearer token..." autocomplete="off">
+    <button onclick="submitToken()">Masuk</button>
+    <div class="overlay-err" id="overlayErr">Token salah, coba lagi.</div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-label">AI Router</div>
+      <div class="brand-name">K's Router</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Menu</div>
+      <a href="/dashboard.html" class="nav-item active">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/chat.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </a>
+      <a href="/providers.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Providers
+      </a>
+      <a href="/analytics.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </a>
+      <a href="/users.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Users
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <a href="/settings.html">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </a>
+    </div>
+  </nav>
+
+  <!-- Bottom nav mobile -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-items">
+      <a href="/dashboard.html" class="bottom-nav-item active">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/chat.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </a>
+      <a href="/providers.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Providers
+      </a>
+      <a href="/analytics.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </a>
+      <a href="/settings.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p style="font-size:13px;color:var(--muted);margin-top:4px" id="rangeLabel">—</p>
+      </div>
+      <div class="range-pills">
+        <button class="range-btn active" data-range="24h">24 jam</button>
+        <button class="range-btn" data-range="7d">7 hari</button>
+        <button class="range-btn" data-range="30d">30 hari</button>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card" style="animation-delay:0ms">
+        <div class="stat-label">Total Requests</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub" id="subTotal">memuat…</div>
+      </div>
+      <div class="stat-card" style="animation-delay:60ms">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value" id="statSuccess">—</div>
+        <div class="stat-sub" id="subSuccess">dari total request</div>
+      </div>
+      <div class="stat-card" style="animation-delay:120ms">
+        <div class="stat-label">Avg Latency</div>
+        <div class="stat-value" id="statLatency">—</div>
+        <div class="stat-sub">ms per request</div>
+      </div>
+      <div class="stat-card" style="animation-delay:180ms">
+        <div class="stat-label">Total Tokens</div>
+        <div class="stat-value" id="statTokens">—</div>
+        <div class="stat-sub" id="subTokens">in + out</div>
+      </div>
+    </div>
+
+    <!-- Token per provider -->
+    <div class="section" style="animation-delay:.15s">
+      <div class="section-header">
+        <span class="section-title">Token per Provider</span>
+        <span class="section-meta" id="providerCount">—</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Requests</th>
+              <th>Tokens In</th>
+              <th>Tokens Out</th>
+              <th>Total Tokens</th>
+              <th>Avg Latency</th>
+              <th>Success</th>
+            </tr>
+          </thead>
+          <tbody id="providerBody">
+            <tr><td colspan="7" class="table-empty">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="section" style="animation-delay:.25s">
+      <div class="section-header">
+        <span class="section-title">Recent Activity</span>
+        <span class="section-meta" id="tableCount">—</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Effort</th>
+              <th>Tokens In</th>
+              <th>Tokens Out</th>
+              <th>Latency</th>
+              <th>Status</th>
+              <th>Waktu</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="7" class="table-empty">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let currentRange = '24h'
+  let token = localStorage.getItem('kr_token') || ''
+
+  // Auth overlay
+  function checkAuth() {
+    if (token) {
+      document.getElementById('overlay').style.display = 'none'
+      loadDashboard()
+    }
+  }
+
+  async function submitToken() {
+    const val = document.getElementById('tokenInput').value.trim()
+    if (!val) return
+    // Test token dengan hit /api/logs
+    try {
+      const res = await fetch('/api/log?range=24h&limit=1', {
+        headers: { Authorization: 'Bearer ' + val }
+      })
+      if (res.status === 401) {
+        document.getElementById('overlayErr').style.display = 'block'
+        return
+      }
+      token = val
+      localStorage.setItem('kr_token', token)
+      document.getElementById('overlay').style.display = 'none'
+      loadDashboard()
+    } catch {
+      document.getElementById('overlayErr').style.display = 'block'
+    }
+  }
+
+  document.getElementById('tokenInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitToken()
+  })
+
+  // Range buttons
+  document.querySelectorAll('.range-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      currentRange = btn.dataset.range
+      loadDashboard()
+    })
+  })
+
+  function fmtTime(iso) {
+    if (!iso) return '—'
+    return new Date(iso).toLocaleString('id-ID', {
+      month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    })
+  }
+
+  function fmtNum(n) {
+    if (n == null || n === 0) return '—'
+    return n.toLocaleString()
+  }
+
+  function effortBadge(effort) {
+  if (!effort) return '<span class="badge badge-medium">medium</span>';
+  
+  const cleanEffort = effort.toLowerCase().trim();
+  const cls = { low: 'badge-low', medium: 'badge-medium', high: 'badge-high' };
+  
+  return `<span class="badge ${cls[cleanEffort] || 'badge-medium'}">${cleanEffort}</span>`;
+  }
+
+  async function loadDashboard() {
+    try {
+      const res = await fetch(`/api/log?range=${currentRange}&limit=30`, {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+
+      if (res.status === 401) {
+        localStorage.removeItem('kr_token')
+        token = ''
+        document.getElementById('overlay').style.display = 'flex'
+        return
+      }
+
+      const d = await res.json()
+      if (d.error) throw new Error(d.error)
+
+      const { stats, byProvider, recent } = d
+      const rangeLabel = { '24h': '24 jam terakhir', '7d': '7 hari terakhir', '30d': '30 hari terakhir' }
+      document.getElementById('rangeLabel').textContent = rangeLabel[currentRange] + ' — diperbarui ' + fmtTime(new Date().toISOString())
+
+      // Stats
+      document.getElementById('statTotal').textContent   = fmtNum(stats.total)
+      document.getElementById('statSuccess').textContent = stats.total ? stats.successRate + '%' : '—'
+      document.getElementById('statLatency').textContent = stats.avgLatency ? stats.avgLatency + ' ms' : '—'
+      document.getElementById('statTokens').textContent  = fmtNum(stats.totalTokensIn + stats.totalTokensOut)
+      document.getElementById('subTotal').textContent    = `${stats.succeeded} sukses · ${stats.failed} gagal`
+      document.getElementById('subTokens').textContent   = `in: ${fmtNum(stats.totalTokensIn)} · out: ${fmtNum(stats.totalTokensOut)}`
+
+      // Provider token table
+      const maxTokens = Math.max(...byProvider.map(p => p.totalTokens), 1)
+      document.getElementById('providerCount').textContent = byProvider.length + ' provider aktif'
+      document.getElementById('providerBody').innerHTML = byProvider.length
+        ? byProvider.map(p => `
+          <tr>
+            <td>
+              <div class="provider-chip">
+                <span class="provider-dot"></span>
+                <span style="font-weight:500">${p.provider}</span>
+              </div>
+              <div class="mono" style="margin-top:2px;padding-left:12px">${p.model}</div>
+            </td>
+            <td class="mono">${p.requests}</td>
+            <td>
+              <div class="token-bar-wrap">
+                <span class="mono highlight">${fmtNum(p.tokensIn)}</span>
+              </div>
+            </td>
+            <td class="mono highlight">${fmtNum(p.tokensOut)}</td>
+            <td>
+              <div class="token-bar-wrap">
+                <span class="mono highlight">${fmtNum(p.totalTokens)}</span>
+                <div class="token-bar-bg"><div class="token-bar-fill" style="width:${Math.round((p.totalTokens/maxTokens)*100)}%"></div></div>
+              </div>
+            </td>
+            <td class="mono">${p.avgLatency ? p.avgLatency + ' ms' : '—'}</td>
+            <td><span class="badge ${p.successRate === 100 ? 'badge-ok' : p.successRate >= 50 ? 'badge-medium' : 'badge-fail'}">${p.successRate}%</span></td>
+          </tr>`).join('')
+        : '<tr><td colspan="7" class="table-empty">Belum ada data provider.</td></tr>'
+
+      // Recent table
+      document.getElementById('tableCount').textContent = recent.length + ' entri terbaru'
+      document.getElementById('tableBody').innerHTML = recent.length
+        ? recent.map(r => `
+          <tr>
+            <td><span class="provider-chip"><span class="provider-dot"></span>${r.provider || '—'}</span></td>
+            <td>${effortBadge(r.effort)}</td>
+            <td class="mono">${fmtNum(r.tokens_in)}</td>
+            <td class="mono">${fmtNum(r.tokens_out)}</td>
+            <td class="mono">${r.latency_ms ? r.latency_ms + ' ms' : '—'}</td>
+            <td><span class="badge ${r.success ? 'badge-ok' : 'badge-fail'}">${r.success ? 'OK' : 'Fail'}</span></td>
+            <td class="mono">${fmtTime(r.created_at)}</td>
+          </tr>`).join('')
+        : '<tr><td colspan="7" class="table-empty">Belum ada data.</td></tr>'
+
+    } catch (err) {
+      document.getElementById('providerBody').innerHTML =
+        `<tr><td colspan="7" class="table-empty">Gagal load: ${err.message}</td></tr>`
+      document.getElementById('tableBody').innerHTML =
+        `<tr><td colspan="7" class="table-empty">Gagal load: ${err.message}</td></tr>`
+    }
+  }
+
+  checkAuth()
+</script>
+</body>
+                                                                                                             </html>

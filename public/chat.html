@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Mencegah zoom paksa di Chrome & Safari Mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>K's Router</title>
+<!-- Import Font Pasangan Dashboard: Inter dan Hedvig Letters Serif -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif&family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+  :root {
+    --canvas:    #f9fbf2;
+    --meadow:    #eff2e5;
+    --ink:       #130e30;
+    --slate:     #5f5c6e;
+    --border:    rgba(19,14,48,0.10);
+    --surface:   #ffffff;
+    --border-ui: #eaeaea;
+    --text:      #111111;
+    --muted:     #787774;
+    --green-bg:  #edf3ec; --green-tx: #346538;
+    --red-bg:    #fdebec; --red-tx:   #9f2f2d;
+    --yellow-bg: #fbf3db; --yellow-tx:#956400;
+    --blue-bg:   #e1f3fe; --blue-tx:  #1f6c9f;
+    --pill:      1440px;
+    --radius:    12px;
+    
+    /* Bubble configuration */
+    --user-bubble-bg: #130e30;
+    --user-bubble-text: #ffffff;
+    --ai-bubble-bg: #ffffff;
+    --ai-bubble-text: #111111;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--canvas);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  /* --- SETUP OVERLAY STYLING --- */
+  #setup {
+    position: fixed;
+    inset: 0;
+    background: var(--canvas);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    z-index: 1000;
+    padding: 2rem;
+  }
+  #setup.hidden { 
+    display: none !important; 
+  }
+  #token-input {
+    width: 100%;
+    max-width: 320px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px; /* Mencegah auto-zoom mobile */
+    outline: none;
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  #token-input:focus {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(19, 14, 48, 0.05);
+  }
+  #token-input.err {
+    border-color: var(--red-tx);
+    background: var(--red-bg);
+  }
+  #save-token {
+    background: var(--ink);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: opacity 0.15s;
+  }
+  #save-token:hover { opacity: 0.9; }
+  
+  .app-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* SIDEBAR UNTUK HISTORY PERSISTEN */
+  #sidebar {
+    width: 260px;
+    background: var(--canvas);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .init-route-btn {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.6rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .init-route-btn:hover { background: #F3F3F2; border-color: #d5d5d3; }
+  
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: 'Inter', sans-serif;
+  }
+  .history-item {
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--muted);
+  }
+  .history-item:hover { background: rgba(0,0,0,0.03); color: var(--text); }
+  .history-item.active { background: var(--surface); color: var(--text); font-weight: 500; border: 1px solid var(--border); }
+
+  .sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .app-container {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Header Controls - Flexbox solid anti-kepotong di mobile screen */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  .logo { 
+    font-family: 'Hedvig Letters Serif', serif; 
+    font-size: 1.05rem; 
+    font-weight: 600; 
+    color: var(--ink); 
+    white-space: nowrap; 
+    margin-left: 2px;
+  }
+  
+  .pct-counter {
+    font-family: 'Share Tech Mono', monospace; 
+    font-size: 11px; 
+    font-weight: 600; 
+    color: var(--blue-tx); 
+    background: var(--blue-bg); 
+    padding: 2px 6px; 
+    border-radius: 4px; 
+    display: none;
+    white-space: nowrap;
+  }
+  
+  .spacer { flex: 1; }
+
+  /* Menaikkan font ke 16px untuk mematikan auto-zoom bawaan browser mobile */
+  select#provider-select {
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: 6px;
+    color: var(--text); 
+    font-size: 16px; 
+    padding: 0.3rem 0.4rem; 
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    max-width: 125px;
+  }
+  button.icon-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    cursor: pointer; padding: 0.35rem 0.55rem; border-radius: 6px;
+    font-size: 0.8rem; font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* Limit Banner State */
+  #limit-screen {
+    position: absolute;
+    inset: 54px 0 0 0;
+    background: rgba(251, 251, 250, 0.96);
+    backdrop-filter: blur(4px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    z-index: 90;
+  }
+  .limit-card {
+    background: var(--surface);
+    border: 1px solid var(--red-tx);
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 420px;
+    box-shadow: 0 4px 12px rgba(159, 47, 45, 0.05);
+  }
+  .limit-title { font-family: 'Inter', sans-serif; color: var(--red-tx); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .limit-desc { font-size: 0.88rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
+
+  /* Workspace View & Container alignment */
+  #workspace { flex: 1; display: flex; width: 100%; overflow: hidden; background: var(--canvas); }
+  
+  .chat-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    background: transparent;
+    overflow: hidden;
+  }
+  #view-b { display: none; border-left: 1px solid var(--border); }
+  #messages, #messages-b { flex: 1; overflow-y: auto; width: 100%; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* Chat Bubble Architecture */
+  .msg-wrapper { display: flex; flex-direction: column; width: 100%; margin-bottom: 4px; }
+  .msg-wrapper.user-align { align-items: flex-end; }
+  .msg-wrapper.ai-align { align-items: flex-start; }
+  
+  .msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); position: relative; font-family: 'Inter', sans-serif; }
+  .msg-wrapper.user-align .msg { background: var(--user-bubble-bg); color: var(--user-bubble-text); border-bottom-right-radius: 4px; }
+  .msg-wrapper.ai-align .msg { background: var(--ai-bubble-bg); color: var(--ai-bubble-text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+
+  .msg-meta { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 6px; text-transform: uppercase; }
+  .msg-wrapper.user-align .msg-meta { justify-content: flex-end; padding-right: 4px; }
+  .msg-wrapper.ai-align .msg-meta { justify-content: flex-start; padding-left: 4px; }
+
+  .tag { font-weight: 700; font-size: 10px; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; }
+  .tag.user { background: var(--meadow); color: var(--ink); }
+  .tag.ai { background: var(--ink); color: #ffffff; }
+  .tag.error { background: var(--red-bg); color: var(--red-tx); }
+
+  /* Thought Box */
+  .thought-box { width: 100%; margin-bottom: 8px; background: rgba(0,0,0,0.02); border-left: 3px solid var(--slate); border-radius: 4px; font-size: 13px; }
+  .thought-box summary { padding: 6px 10px; color: var(--slate); cursor: pointer; font-weight: 600; font-family: 'Inter', sans-serif; font-size: 11px; outline: none; }
+  .thought-content { padding: 8px 10px; color: #555555; border-top: 1px dashed var(--border); font-style: italic; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
+
+  .msg-content { font-size: 14.5px; word-break: break-word; font-family: 'Inter', sans-serif; }
+  .msg-content p { margin-bottom: 8px; }
+  .msg-content p:last-child { margin-bottom: 0; }
+  
+  .msg-content code { font-family: 'Share Tech Mono', monospace; font-size: 13px; background: rgba(0,0,0,0.05); padding: 2px 5px; border-radius: 4px; color: var(--red-tx); }
+  .msg-wrapper.user-align .msg-content code { background: rgba(255,255,255,0.15); color: #FFF; }
+  .msg-content pre { background: #1E1E1E; border-radius: 8px; padding: 12px; overflow-x: auto; margin: 8px 0; }
+  .msg-content pre code { color: #A8FFB2; background: none; padding: 0; }
+  
+  .msg-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .action-btn { font-family: 'Inter', sans-serif; font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); padding: 2px 6px; cursor: pointer; }
+
+  #empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 0.6rem; color: var(--muted); text-align: center; padding: 2rem; background: var(--canvas); }
+
+  .footer-container { padding: 0.5rem 0.75rem env(safe-area-inset-bottom, 0.5rem); background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; width: 100%; }
+  footer { display: flex; gap: 0.5rem; align-items: flex-end; width: 100%; }
+
+  textarea#input { 
+    flex: 1; 
+    background: transparent; 
+    border: none; 
+    color: var(--text); 
+    padding: 0.5rem 0.5rem 0; 
+    font-size: 16px; /* Matikan paksa zoom browser mobile */
+    font-family: 'Inter', sans-serif; 
+    resize: none; 
+    min-height: 40px; 
+    max-height: 160px; 
+    outline: none; 
+    line-height: 1.5; 
+  }
+
+  button#send { background: #111111; color: #FFFFFF; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.15s; }
+  button#send:disabled { opacity: 0.25; cursor: not-allowed; }
+
+  #upload-btn { height: 32px; width: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(19,14,48,0.05); border: none; color: var(--ink); cursor: pointer; font-size: 1.1rem; }
+  #effort-select { background: rgba(19,14,48,0.04); border: none; border-radius: 16px; color: var(--ink); font-size: 0.78rem; padding: 0.35rem 0.75rem; font-weight: 500; outline: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+  .progress-container { width: 100%; height: 3px; background: var(--border); position: relative; overflow: hidden; display: none; flex-shrink: 0; }
+  .progress-bar { height: 100%; width: 0%; background: var(--ink); transition: width 0.2s cubic-bezier(0.1, 0.8, 0.3, 1); }
+
+  #compare-tabs { display: none; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; width: 100%; }
+  .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; font-family: 'Inter', sans-serif; font-size: 0.75rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--text); font-weight: bold; }
+
+  @media (min-width: 768px) {
+    #compare-tabs { display: none !important; }
+    .chat-view { display: flex !important; width: 50%; }
+  }
+
+  @media (max-width: 767px) {
+    #menu-toggle-btn { display: block !important; }
+    #sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 200;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease-in-out;
+      box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+      width: 260px;
+    }
+    #sidebar.mobile-open { transform: translateX(0); }
+    .chat-view { max-width: 100%; }
+    #view-b.active-tab { display: flex !important; width: 100%; }
+    #view-a.active-tab { display: flex !important; width: 100%; }
+    #view-a:not(.active-tab) { display: none !important; }
+    #view-b:not(.active-tab) { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <div style="font-family: 'Hedvig Letters Serif', serif; font-size: 1.5rem; font-weight: 700; color: var(--ink);">K's Router</div>
+  <p style="color: var(--muted); font-size: 0.85rem;">Masukkan bearer token untuk mulai.</p>
+  <input id="token-input" type="password" placeholder="token..." autocomplete="off" />
+  <p id="setup-error" style="color: var(--red-tx); font-size: 0.8rem; display: none;">Token salah, coba lagi.</p>
+  <button id="save-token">Masuk</button>
+</div>
+
+<div class="app-layout">
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <button class="init-route-btn" id="init-btn">[+] Initialize Route</button>
+    </div>
+    <div class="history-list" id="history-list-view"></div>
+    <div class="sidebar-footer">
+      <button class="icon-btn" style="width:100%" onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <div id="limit-screen">
+      <div class="limit-card">
+        <div class="limit-title">STATUS: 429 LIMIT EXCEEDED</div>
+        <div class="limit-desc">You've run out of the request limits on this router branch, bro. Tunggu siklus cooldown selesai atau kurangi setelan effort lo.</div>
+        <button class="action-btn" style="padding: 6px 16px;" onclick="closeLimitScreen()">Acknowledge</button>
+      </div>
+    </div>
+
+    <header>
+      <button class="icon-btn" id="menu-toggle-btn" style="display: none; font-size: 1.1rem; padding: 0.2rem 0.6rem;">☰</button>
+      <button class="icon-btn" onclick="window.location.href='dashboard.html'" title="Ke Dashboard">←</button>
+      <span class="logo">K's Router</span>
+      <span id="progress-pct" class="pct-counter">0%</span>
+      <div class="spacer"></div>
+      <select id="provider-select">
+        <option value="">Auto</option>
+        <option value="compare">⚔️ Compare Mode</option>
+        <option value="groq">Llama 3.3</option>
+        <option value="github_gpt">GPT-4o mini</option>
+        <option value="nvidia_qwen">Qwen 3.5</option>
+        <option value="nvidia_deepseek">DeepSeek V4 Pro</option>
+        <option value="nvidia_z_ai">GLM 5.2</option>
+        <option value="google_gemini">Gemini 2.5 Flash</option>
+      </select>
+      <button class="icon-btn" id="clear-btn" title="Reset Sesi Ini">clear</button>
+    </header>
+
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+      
+    <div id="compare-tabs">
+      <button class="tab-btn active" id="tab-a-btn">Model A</button>
+      <button class="tab-btn" id="tab-b-btn">Model B</button>
+    </div>
+
+    <div id="workspace">
+      <div id="view-a" class="chat-view active-tab">
+        <div id="messages">
+          <div id="empty">
+            <div class="mark" style="font-family: 'Share Tech Mono', monospace; font-size: 1.6rem; color: var(--text);">/</div>
+            <p style="font-size: 0.85rem; line-height: 1.8;">
+              Ketik pesan untuk mulai.<br>
+              Gunakan <code>/search query</code> untuk data real-time.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div id="view-b" class="chat-view">
+        <div id="messages-b"></div>
+      </div>
+    </div>
+
+    <div class="footer-container">
+      <footer style="background: transparent; border: none; max-width: 760px; width: 100%; margin: 0 auto; padding: 0.5rem 0.5rem 1rem;">
+        <div class="input-container" style="background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 0.5rem 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); width: 100%;">
+          
+          <textarea id="input" placeholder="Chat with K's Router... atau /search query" rows="1"></textarea>
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 0.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="file" id="file-injector" accept=".js,.py,.html,.css,.json,.txt" style="display: none;" />
+              <button id="upload-btn" type="button" title="Inject file">+</button>
+              
+              <select id="effort-select">
+                <option value="low">😴 Low</option>
+                <option value="medium" selected>😮‍💨 Medium</option>
+                <option value="high">😬 High</option>
+              </select>
+
+              <span id="file-preview-badge" style="display: none; font-size: 0.75rem; background: var(--blue-bg); color: var(--blue-tx); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+            </div>
+
+            <button id="send" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script>
+  const menuToggleBtn = document.getElementById('menu-toggle-btn');
+  const sidebarEl = document.getElementById('sidebar');
+
+  menuToggleBtn.onclick = (e) => {
+    e.stopPropagation();
+    sidebarEl.classList.toggle('mobile-open');
+  };
+
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth < 768 && sidebarEl.classList.contains('mobile-open')) {
+      if (!sidebarEl.contains(e.target) && e.target !== menuToggleBtn) {
+        sidebarEl.classList.remove('mobile-open');
+      }
+    }
+  });
+  
+  const CHAT_ENDPOINT = '/api/chat';
+
+  let TOKEN = localStorage.getItem('kr_token') || '';
+  let currentSessionId = localStorage.getItem('kr_curr_session') || '';
+  let sessions = JSON.parse(localStorage.getItem('kr_sessions')) || {};
+
+  marked.setOptions({ breaks: true, gfm: true });
+
+  const setupEl = document.getElementById('setup');
+  const tokenInput = document.getElementById('token-input');
+  const setupError = document.getElementById('setup-error');
+  const messagesEl = document.getElementById('messages');
+  const messagesBEl = document.getElementById('messages-b');
+  const emptyEl = document.getElementById('empty');
+  const inputEl = document.getElementById('input');
+  const sendBtn = document.getElementById('send');
+  const providerSelect = document.getElementById('provider-select');
+  const effortSelect = document.getElementById('effort-select');
+  const fileInjector = document.getElementById('file-injector');
+  const uploadBtn = document.getElementById('upload-btn');
+  const historyListView = document.getElementById('history-list-view');
+  const limitScreen = document.getElementById('limit-screen');
+  
+  const compareTabs = document.getElementById('compare-tabs');
+  const viewA = document.getElementById('view-a');
+  const viewb = document.getElementById('view-b');
+  const tabABtn = document.getElementById('tab-a-btn');
+  const tabBBtn = document.getElementById('tab-b-btn');
+
+  const progressContainer = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
+  const progressPct = document.getElementById('progress-pct');
+  let progressInterval;
+
+  if (TOKEN) setupEl.classList.add('hidden');
+
+  // Load defaults dari settings
+  const savedEffort = (localStorage.getItem('kr_default_effort') || 'medium').toLowerCase().trim()
+  if (['low', 'medium', 'high'].includes(savedEffort)) effortSelect.value = savedEffort
+
+  const savedProvider = localStorage.getItem('kr_default_provider') || 'auto_router'
+  const mappedProvider = savedProvider === 'auto_router' ? '' : savedProvider
+  if ([...providerSelect.options].some(o => o.value === mappedProvider)) {
+    providerSelect.value = mappedProvider
+  }
+
+  function initNewSession() {
+    const id = 'session_' + Date.now();
+    sessions[id] = {
+      id: id,
+      title: 'Branch // ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      history: []
+    };
+    currentSessionId = id;
+    saveSessionsToStorage();
+    renderSidebar();
+    loadSessionChat(id);
+  }
+
+  function saveSessionsToStorage() {
+    localStorage.setItem('kr_sessions', JSON.stringify(sessions));
+    localStorage.setItem('kr_curr_session', currentSessionId);
+  }
+
+  function renderSidebar() {
+    historyListView.innerHTML = '';
+    Object.keys(sessions).sort((a,b) => b.split('_')[1] - a.split('_')[1]).forEach(sid => {
+      const item = document.createElement('div');
+      item.className = `history-item ${sid === currentSessionId ? 'active' : ''}`;
+      item.textContent = sessions[sid].title;
+      item.onclick = () => loadSessionChat(sid);
+      historyListView.appendChild(item);
+    });
+  }
+
+  function loadSessionChat(sid) {
+    currentSessionId = sid;
+    localStorage.setItem('kr_curr_session', sid);
+    renderSidebar();
+    
+    messagesEl.innerHTML = '';
+    messagesBEl.innerHTML = '';
+    
+    const hist = sessions[sid]?.history || [];
+    if (hist.length === 0) {
+      messagesEl.appendChild(emptyEl);
+      emptyEl.style.display = 'flex';
+    } else {
+      emptyEl.style.display = 'none';
+      hist.forEach(m => {
+        if (m.role === 'user') {
+          if (!m.content.startsWith('Use ONLY the following search results')) {
+             addMsgRaw('user', m.content, messagesEl);
+          }
+        } else if (m.role === 'assistant') {
+          addMsgRaw('ai', m.content, messagesEl);
+        }
+      });
+    }
+    if (window.innerWidth < 768) sidebarEl.classList.remove('mobile-open');
+    closeLimitScreen();
+  }
+
+  function addMsgRaw(role, content, targetContainer) {
+    if (targetContainer === messagesEl) emptyEl.style.display = 'none';
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper ${role === 'user' ? 'user-align' : 'ai-align'}`;
+    
+    const div = document.createElement('div');
+    div.className = 'msg';
+
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    const tag = document.createElement('span');
+    tag.className = 'tag ' + role;
+    tag.textContent = role === 'user' ? 'you' : 'ai';
+    meta.appendChild(tag);
+    
+    const ts = document.createElement('span');
+    ts.style = "font-size:10px; color:var(--muted); margin-left:5px;";
+    ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    meta.appendChild(ts);
+    wrapper.appendChild(meta);
+
+    let finalContent = content;
+    if (role === 'ai' && content && content.includes('<think>') && content.includes('</think>')) {
+      const parts = content.split('</think>');
+      const thoughtText = parts[0].replace('<think>', '').trim();
+      finalContent = parts[1] ? parts[1].trim() : '';
+      if (thoughtText) {
+        const details = document.createElement('details');
+        details.className = 'thought-box';
+        const summary = document.createElement('summary');
+        summary.textContent = '💭 Thinking Process (click)';
+        const thoughtDiv = document.createElement('div');
+        thoughtDiv.className = 'thought-content';
+        thoughtDiv.textContent = thoughtText;
+        details.appendChild(summary); details.appendChild(thoughtDiv); div.appendChild(details);
+      }
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'msg-content';
+    contentDiv.innerHTML = marked.parse(finalContent || '...');
+    div.appendChild(contentDiv);
+    wrapper.appendChild(div);
+    targetContainer.appendChild(wrapper);
+    targetContainer.scrollTop = targetContainer.scrollHeight;
+  }
+
+  function triggerLimitScreen() { limitScreen.style.display = 'flex'; }
+  function closeLimitScreen() { limitScreen.style.display = 'none'; }
+
+  function startProgress() {
+    progressContainer.style.display = 'block'; progressPct.style.display = 'block';
+    let pct = 0; progressBar.style.width = '0%'; progressPct.textContent = '0%';
+    clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+      if (pct < 65) { pct += Math.floor(Math.random() * 12) + 4; }
+      else if (pct < 93) { pct += Math.floor(Math.random() * 3) + 1; }
+      if (pct > 96) pct = 96;
+      progressBar.style.width = pct + '%'; progressPct.textContent = pct + '%';
+    }, 120);
+  }
+
+  function stopProgress() {
+    clearInterval(progressInterval); progressBar.style.width = '100%'; progressPct.textContent = '100%';
+    setTimeout(() => { progressContainer.style.display = 'none'; progressPct.style.display = 'none'; }, 350);
+  }
+
+  document.getElementById('init-btn').onclick = initNewSession;
+
+  providerSelect.onchange = () => {
+    if (providerSelect.value === 'compare') {
+      viewb.style.display = 'flex';
+      if (window.innerWidth < 768) compareTabs.style.display = 'flex';
+    } else {
+      viewb.style.display = 'none'; compareTabs.style.display = 'none';
+      viewA.classList.add('active-tab'); viewb.classList.remove('active-tab');
+    }
+  };
+
+  tabABtn.onclick = () => { tabABtn.classList.add('active'); tabBBtn.classList.remove('active'); viewA.classList.add('active-tab'); viewb.classList.remove('active-tab'); };
+  tabBBtn.onclick = () => { tabBBtn.classList.add('active'); tabABtn.classList.remove('active'); viewb.classList.add('active-tab'); viewA.classList.remove('active-tab'); };
+
+  document.getElementById('save-token').onclick = async () => {
+    const val = tokenInput.value.trim();
+    if (!val) return;
+    tokenInput.classList.remove('err');
+    setupError.style.display = 'none';
+    
+    try {
+      const test = await fetch(CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + val },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] })
+      });
+      if (test.status === 401) {
+        tokenInput.classList.add('err');
+        setupError.style.display = 'block';
+        return;
+      }
+      TOKEN = val;
+      localStorage.setItem('kr_token', val);
+      setupEl.classList.add('hidden');
+    } catch (err) {
+      TOKEN = val;
+      localStorage.setItem('kr_token', val);
+      setupEl.classList.add('hidden');
+    }
+  };
+  
+  document.getElementById('clear-btn').onclick = () => {
+    if(sessions[currentSessionId]) {
+      sessions[currentSessionId].history = [];
+      saveSessionsToStorage();
+      loadSessionChat(currentSessionId);
+    }
+  };
+
+  uploadBtn.onclick = () => { fileInjector.click(); };
+
+  let attachedFileContent = "";
+  let attachedFileName = "";
+
+  fileInjector.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File kegedean, bro! Maksimal 2MB.');
+      return;
+    }
+    try {
+      attachedFileContent = await file.text();
+      attachedFileName = file.name;
+      const badge = document.getElementById('file-preview-badge');
+      badge.textContent = `📄 ${file.name}`;
+      badge.style.display = 'block';
+    } catch (err) {
+      alert('Gagal membaca file: ' + err.message);
+    }
+    fileInjector.value = '';
+    updateSendButtonState();
+  });
+
+  function updateSendButtonState() {
+    sendBtn.disabled = !(inputEl.value.trim() || attachedFileContent);
+  }
+  inputEl.addEventListener('input', updateSendButtonState);
+
+  /* FIXED & CLEANED UP BUBBLE GENERATOR LOGIC */
+  function addMsg(role, content, opts = {}) {
+    const targetContainer = opts.target || messagesEl;
+    if (targetContainer === messagesEl) emptyEl.style.display = 'none';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper ${role === 'user' ? 'user-align' : 'ai-align'}`;
+
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.setAttribute('data-role', role);
+
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+
+    const tag = document.createElement('span');
+    tag.className = 'tag ' + role;
+    tag.textContent = role === 'user' ? 'you' : role === 'error' ? 'error' : 'ai';
+    meta.appendChild(tag);
+
+    if (opts.provider) {
+      const pSpan = document.createElement('span');
+      pSpan.className = 'msg-provider';
+      pSpan.style = "font-size:10px; font-weight:600; color:var(--muted); margin-left:5px;";
+      pSpan.textContent = opts.provider.toUpperCase();
+      meta.appendChild(pSpan);
+    }
+
+    const ts = document.createElement('span');
+    ts.className = 'msg-ts';
+    ts.style = "font-size:10px; color:var(--muted); margin-left:5px;";
+    ts.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    meta.appendChild(ts);
+    
+    wrapper.appendChild(meta);
+
+    if (opts.fileName) {
+      const fileBox = document.createElement('div');
+      fileBox.style = "display: inline-flex; align-items: center; gap: 8px; background: var(--meadow); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; color: var(--ink); font-weight: 500;";
+      fileBox.innerHTML = `<span>📄</span> <div style="display:flex; flex-direction:column;"><strong style="font-size:12px;">${opts.fileName}</strong><span style="font-size:10px; color:var(--muted)">Attached File</span></div>`;
+      div.appendChild(fileBox);
+    }
+
+    let finalContent = content || '';
+    let thoughtText = '';
+
+    if (opts.reasoning) {
+      thoughtText = opts.reasoning.trim();
+    } else if (finalContent.includes('<think>') && finalContent.includes('</think>')) {
+      const parts = finalContent.split('</think>');
+      thoughtText = parts[0].replace('<think>', '').trim();
+      finalContent = parts[1] ? parts[1].trim() : '';
+    }
+
+    if (thoughtText) {
+      const details = document.createElement('details');
+      details.className = 'thought-box';
+      details.open = true;
+      
+      const summary = document.createElement('summary');
+      summary.textContent = '💭 Thinking Process (click to toggle)';
+      
+      const thoughtDiv = document.createElement('div');
+      thoughtDiv.className = 'thought-content';
+      thoughtDiv.textContent = thoughtText;
+      
+      details.appendChild(summary);
+      details.appendChild(thoughtDiv);
+      div.appendChild(details);
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'msg-content';
+    contentDiv.innerHTML = marked.parse(finalContent || 'No response text.');
+    div.appendChild(contentDiv);
+
+    const actions = document.createElement('div');
+    actions.className = 'msg-actions';
+
+    if (role === 'ai') {
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'action-btn';
+      copyBtn.textContent = 'copy';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(finalContent);
+        copyBtn.textContent = 'copied';
+        setTimeout(() => { copyBtn.textContent = 'copy'; }, 1500);
+      };
+      actions.appendChild(copyBtn);
+      div.appendChild(actions);
+    } else if (role === 'user') {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'action-btn';
+      editBtn.textContent = 'edit';
+      editBtn.onclick = () => {
+        inputEl.value = content;
+        inputEl.focus();
+        const nodes = Array.from(targetContainer.children);
+        const idx = nodes.indexOf(wrapper);
+        if (idx !== -1) {
+          while (targetContainer.children.length > idx) {
+            targetContainer.removeChild(targetContainer.lastChild);
+          }
+          if(sessions[currentSessionId]) {
+            sessions[currentSessionId].history = sessions[currentSessionId].history.slice(0, idx);
+            saveSessionsToStorage();
+          }
+        }
+        updateSendButtonState();
+      };
+      actions.appendChild(editBtn);
+      div.appendChild(actions);
+    }
+
+    wrapper.appendChild(div);
+    targetContainer.appendChild(wrapper);
+    targetContainer.scrollTop = targetContainer.scrollHeight;
+    return wrapper;
+  }
+
+  async function fetchModelResponse(provider, bodyPayload, targetContainer, labelPrefix) {
+    try {
+      const currentEffort = effortSelect.value;
+      const payload = { ...bodyPayload, effort: currentEffort };
+      if (provider) payload.provider = provider;
+
+      const res = await fetch(CHAT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.status === 429) { triggerLimitScreen(); return null; }
+      if (res.status === 401) { addMsg('error', 'Unauthorized — token salah.', { target: targetContainer }); return null; }
+      if (!res.ok) { addMsg('error', 'Error ' + res.status + ' — provider gagal.', { target: targetContainer }); return null; }
+
+      const data = await res.json();
+      const messageObj = data.choices?.[0]?.message || {};
+      const reply = messageObj.content || '';
+      const reasoning = messageObj.reasoning_content || '';
+
+      addMsg('ai', reply, { 
+        provider: data._provider || provider, 
+        target: targetContainer,
+        reasoning: reasoning 
+      });
+
+      if (labelPrefix && document.getElementById(labelPrefix)) {
+        document.getElementById(labelPrefix).textContent = (data._provider || provider).toUpperCase();
+      }
+      
+      return reasoning ? `<think>${reasoning}</think>\n${reply}` : reply;
+    } catch (err) {
+      addMsg('error', 'Request failed: ' + err.message, { target: targetContainer }); 
+      return null;
+    }
+  }
+
+  async function send() {
+    let text = inputEl.value.trim();
+    if (!text && !attachedFileContent) return;
+
+    let displayBody = text;
+    let fullPrompt = text;
+
+    if (attachedFileContent) {
+      fullPrompt = `[Attached File]: ${attachedFileName}\n\`\`\`\n${attachedFileContent}\n\`\`\`\n\n${text || 'Tolong analisa file ini.'}`;
+      if (!text) displayBody = `Menganalisa file ${attachedFileName}`;
+    }
+
+    inputEl.value = '';
+    inputEl.style.height = '40px';
+    document.getElementById('file-preview-badge').style.display = 'none';
+
+    sendBtn.disabled = true;
+    startProgress();
+    
+    if (!sessions[currentSessionId]) {
+      initNewSession();
+    }
+    
+    let currentHistory = sessions[currentSessionId].history;
+    currentHistory.push({ role: 'user', content: fullPrompt });
+
+    const mode = providerSelect.value;
+
+    if (mode === 'compare') {
+      addMsg('user', displayBody, { target: messagesEl, fileName: attachedFileName });
+      addMsg('user', displayBody, { target: messagesBEl, fileName: attachedFileName });
+      
+      tabABtn.textContent = "Loading A...";
+      tabBBtn.textContent = "Loading B...";
+
+      const [replyA, replyB] = await Promise.all([
+        fetchModelResponse('nvidia_deepseek', { messages: currentHistory }, messagesEl, 'tab-a-btn'),
+        fetchModelResponse('github_gpt', { messages: currentHistory }, messagesBEl, 'tab-b-btn')
+      ]);
+
+      if (replyA) currentHistory.push({ role: 'assistant', content: replyA });
+    } else {
+      addMsg('user', displayBody, { target: messagesEl, fileName: attachedFileName });
+      const reply = await fetchModelResponse(mode, { messages: currentHistory }, messagesEl);
+      if (reply) {
+        currentHistory.push({ role: 'assistant', content: reply });
+      }
+    }
+
+    attachedFileContent = "";
+    attachedFileName = "";
+    sendBtn.disabled = true;
+    stopProgress();
+    
+    if (currentHistory.length <= 2) {
+      sessions[currentSessionId].title = text.slice(0, 20) + (text.length > 20 ? '...' : '');
+    }
+    saveSessionsToStorage();
+    renderSidebar();
+  }
+
+  sendBtn.onclick = send;
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+  inputEl.addEventListener('input', () => { inputEl.style.height = '40px'; inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'; });
+
+  if (Object.keys(sessions).length === 0) {
+    initNewSession();
+  } else {
+    if (!currentSessionId || !sessions[currentSessionId]) {
+      currentSessionId = Object.keys(sessions)[0];
+    }
+    renderSidebar();
+    loadSessionChat(currentSessionId);
+  }
+</script>
+</body>
+  </html>q
