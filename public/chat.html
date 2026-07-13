@@ -396,16 +396,13 @@
       <span class="logo">K's Router</span>
       <span id="progress-pct" class="pct-counter">0%</span>
       <div class="spacer"></div>
+      
+      <!-- Hapus daftar hardcoded, kita sisakan opsi standar saja -->
       <select id="provider-select">
-        <option value="">Auto</option>
+        <option value="">Auto Router</option>
         <option value="compare">⚔️ Compare Mode</option>
-        <option value="groq">Llama 3.3</option>
-        <option value="github_gpt">GPT-4o mini</option>
-        <option value="nvidia_qwen">Qwen 3.5</option>
-        <option value="nvidia_deepseek">DeepSeek V4 Pro</option>
-        <option value="nvidia_z_ai">GLM 5.2</option>
-        <option value="google_gemini">Gemini 2.5 Flash</option>
       </select>
+      
       <button class="icon-btn" id="clear-btn" title="Reset Sesi Ini">clear</button>
     </header>
 
@@ -518,15 +515,9 @@
 
   if (TOKEN) setupEl.classList.add('hidden');
 
-  // Load defaults dari settings
-  const savedEffort = (localStorage.getItem('kr_default_effort') || 'medium').toLowerCase().trim()
-  if (['low', 'medium', 'high'].includes(savedEffort)) effortSelect.value = savedEffort
-
-  const savedProvider = localStorage.getItem('kr_default_provider') || 'auto_router'
-  const mappedProvider = savedProvider === 'auto_router' ? '' : savedProvider
-  if ([...providerSelect.options].some(o => o.value === mappedProvider)) {
-    providerSelect.value = mappedProvider
-  }
+  // Load defaults dari settings (Untuk effort langsung aman karena opsi HTML-nya statis)
+  const savedEffort = (localStorage.getItem('kr_default_effort') || 'medium').toLowerCase().trim();
+  if (['low', 'medium', 'high'].includes(savedEffort)) effortSelect.value = savedEffort;
 
   function initNewSession() {
     const id = 'session_' + Date.now();
@@ -910,7 +901,7 @@
     startProgress();
     
     if (!sessions[currentSessionId]) {
-      initNewSession();
+      initNewSession;
     }
     
     let currentHistory = sessions[currentSessionId].history;
@@ -951,9 +942,45 @@
     renderSidebar();
   }
 
+  /* SYNC DYNAMIC ROUTE FROM ENDPOINT & SET DEFAULT SETTING VALUE */
+  async function loadDynamicProviders() {
+    try {
+      const res = await fetch('/api/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      // Reset dropdown bawaan tapi amankan opsi Auto & Compare
+      providerSelect.innerHTML = '<option value="">Auto Router</option><option value="compare">⚔️ Compare Mode</option>';
+      
+      // Inject otomatis model hasil tarikan dari Buku Induk Backend
+      data.providers.forEach(prov => {
+        const opt = document.createElement('option');
+        opt.value = prov.id;
+        opt.textContent = prov.name;
+        providerSelect.appendChild(opt);
+      });
+
+      // TAKTIK PARALEL: Terapkan default provider lo di SINI setelah datanya komplit terpasang!
+      const savedProvider = localStorage.getItem('kr_default_provider') || 'auto_router';
+      const mappedProvider = savedProvider === 'auto_router' ? '' : savedProvider;
+      if ([...providerSelect.options].some(o => o.value === mappedProvider)) {
+        providerSelect.value = mappedProvider;
+      }
+      
+      // Trigger event change manual untuk inisialisasi awal layout view
+      providerSelect.dispatchEvent(new Event('change'));
+
+    } catch (err) {
+      console.error("Gagal sinkronisasi data master rute:", err);
+    }
+  }
+
   sendBtn.onclick = send;
   inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
   inputEl.addEventListener('input', () => { inputEl.style.height = '40px'; inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px'; });
+
+  // Inisialisasi Runtime Aplikasi
+  loadDynamicProviders();
 
   if (Object.keys(sessions).length === 0) {
     initNewSession();
@@ -966,4 +993,4 @@
   }
 </script>
 </body>
-  </html>q
+  </html>
