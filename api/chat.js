@@ -68,8 +68,13 @@ module.exports = async function handler(req, res) {
   // ========================================================
   // JALUR KHUSUS 1: LANGSUNG KE PABRIK QWEN ALIBABA
   // ========================================================
-  if (provider === 'qwen3.7-plus' || provider === 'qwen3.7-max') {
+  if (provider === 'qwen_max' || provider === 'qwen_plus' || provider === 'qwen3.7-max' || provider === 'qwen3.7-plus') {
     try {
+      // Taktik mapping otomatis: jika frontend kirim key pendek, ubah jadi nama resmi pabriknya
+      let targetModel = provider;
+      if (provider === 'qwen_max') targetModel = 'qwen3.7-max';
+      if (provider === 'qwen_plus') targetModel = 'qwen3.7-plus';
+
       const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -77,7 +82,7 @@ module.exports = async function handler(req, res) {
           "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
         },
         body: JSON.stringify({
-          model: provider,
+          model: targetModel, // Otomatis mengirim 'qwen3.7-max' atau 'qwen3.7-plus' sesuai pesanan dropdown
           messages: [{ role: "user", content: lastUserMessage }],
           temperature: effortParams.temperature,
           max_tokens: effortParams.max_tokens
@@ -90,11 +95,11 @@ module.exports = async function handler(req, res) {
       const data = await response.json();
       const reply = data.choices[0].message.content;
 
-      await logUsage({ provider: 'Qwen Factory', model: provider, effort, thinking, latencyMs, success: true });
+      await logUsage({ provider: 'Qwen Factory', model: targetModel, effort, thinking, latencyMs, success: true });
 
       return res.status(200).json({
         _provider: 'Qwen Factory',
-        _model: provider,
+        _model: targetModel,
         _latencyMs: latencyMs,
         choices: [{ message: { role: "assistant", content: reply } }]
       });
