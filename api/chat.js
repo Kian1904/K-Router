@@ -74,27 +74,28 @@ module.exports = async function handler(req, res) {
       if (provider === 'qwen_max') targetModel = 'qwen3.7-max';
       if (provider === 'qwen_plus') targetModel = 'qwen3.7-plus';
 
-      // TAKTIK AMAN: Pastikan array messages tidak kosong. Jika kosong, buatkan fallback.
       const formattedMessages = messages && messages.length > 0 
         ? messages 
         : [{ role: "user", content: lastUserMessage || "Hi" }];
 
-      const response = await fetch("https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation", {
+      const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
         },
         body: JSON.stringify({
           model: targetModel,
-          messages: formattedMessages, // 🌟 Mengirim seluruh riwayat chat yang valid
+          messages: formattedMessages,
           temperature: effortParams.temperature,
-          max_tokens: effortParams.max_tokens
+          max_tokens: effortParams.max_tokens,
+          // 🌟 KUNCI UTAMA DARI DOKUMENTASI ALIBABA:
+          enable_thinking: true 
         })
       });
 
       const latencyMs = Date.now() - startTime;
       
-      // Jika server pabrik ngasih eror, tangkap detail teks erornya buat debugging
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`DashScope HTTP ${response.status}: ${errText}`);
@@ -102,6 +103,8 @@ module.exports = async function handler(req, res) {
 
       const data = await response.json();
       const reply = data.choices[0].message.content;
+      // 🌟 Ambil proses berpikir Qwen agar otomatis muncul di UI balok <think> lo!
+      const reasoning = data.choices[0].message.reasoning_content || "";
 
       await logUsage({ provider: 'Qwen Factory', model: targetModel, effort, thinking, latencyMs, success: true });
 
@@ -109,13 +112,19 @@ module.exports = async function handler(req, res) {
         _provider: 'Qwen Factory',
         _model: targetModel,
         _latencyMs: latencyMs,
-        choices: [{ message: { role: "assistant", content: reply } }]
+        choices: [{ 
+          message: { 
+            role: "assistant", 
+            content: reply,
+            reasoning_content: reasoning // Dilempar langsung ke UI chat.html lo
+          } 
+        }]
       });
     } catch (err) {
       console.error("Detail Eror Pabrik Qwen:", err.message);
       const latencyMs = Date.now() - startTime;
       await logUsage({ provider: 'Qwen Factory', model: provider, effort, thinking, latencyMs, success: false, errorMsg: err.message });
-      // Jika gagal, biarkan merosot ke engine cascade di bawah
+      return res.status(500).json({ error: `Jalur Kilat Qwen Gagal: ${err.message}` });
     }
   }
 
