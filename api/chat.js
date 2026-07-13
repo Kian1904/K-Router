@@ -79,7 +79,7 @@ module.exports = async function handler(req, res) {
         ? messages 
         : [{ role: "user", content: lastUserMessage || "Hi" }];
 
-      const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
+      const response = await fetch("https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation", {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
