@@ -26,6 +26,95 @@ async function logUsage({ provider, model, effort, thinking, tokensIn, tokensOut
   }
 }
 
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
+
+  const { provider, messages, input } = req.body || {};
+  const userToken = req.headers.authorization;
+
+  // Validasi token internal aplikasi lo
+  if (!userToken || userToken === "Bearer null" || userToken.trim() === "") {
+    return res.status(401).json({ error: "Akses ditolak." });
+  }
+
+  const userPrompt = input || messages[messages.length - 1]?.content || "";
+
+  // ========================================================
+  // RUTE 1: JALUR KHUSUS PABRIK QWEN (ALIBABA DASHSCOPE)
+  // ========================================================
+  if (provider === 'qwen3.7-plus' || provider === 'qwen3.7-max') {
+    try {
+      const response = await fetch("https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.DASHSCOPE_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: provider,
+          messages: [{ role: "user", content: userPrompt }],
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) throw new Error(`DashScope gagal: ${response.status}`);
+      const data = await response.json();
+      
+      return res.status(200).json({
+        _provider: provider,
+        choices: [{ message: { role: "assistant", content: data.choices[0].message.content } }]
+      });
+    } catch (err) {
+      return res.status(500).json({ error: `Pabrik Qwen Error: ${err.message}` });
+    }
+  }
+
+  // ========================================================
+  // RUTE 2: JALUR KHUSUS PABRIK DEEPSEEK RESMI
+  // ========================================================
+  if (provider === 'deepseek-chat' || provider === 'deepseek-reasoning') {
+    try {
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}` // Kunci rahasia dari platform DeepSeek lo
+        },
+        body: JSON.stringify({
+          model: provider, // 'deepseek-chat' (V3) atau 'deepseek-reasoning' (R1)
+          messages: [{ role: "user", content: userPrompt }],
+          temperature: provider === 'deepseek-reasoning' ? 0.6 : 0.7 // R1 butuh temp sedikit lebih rendah biar stabil
+        })
+      });
+
+      if (!response.ok) throw new Error(`DeepSeek gagal: ${response.status}`);
+      const data = await response.json();
+      
+      // Ambil teks chat reguler dan simpan teks reasoning (berpikir) jika ada (khusus R1)
+      const replyContent = data.choices[0].message.content;
+      const reasoningContent = data.choices[0].message.reasoning_content || "";
+
+      return res.status(200).json({
+        _provider: provider,
+        choices: [{ 
+          message: { 
+            role: "assistant", 
+            content: replyContent,
+            reasoning_content: reasoningContent // Langsung dioper ke UI balok <think> lo
+          } 
+        }]
+      });
+    } catch (err) {
+      return res.status(500).json({ error: `Pabrik DeepSeek Error: ${err.message}` });
+    }
+  }
+
+  // ========================================================
+  // JALUR LAMA LO: (Auto Router / Nvidia / GitHub GPT, dll)
+  // ========================================================
+  // ... Tempel sisa kode penanganan lama lo di sini ...
+                                   }
+
 function convertToGoogleFormat(messages) {
   return messages.map(msg => ({
     role: msg.role === 'user' ? 'user' : 'model',
