@@ -28,8 +28,25 @@
   --radius:    12px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
-.app{display:flex;min-height:100vh}
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; 
+}
+
+  body.page-loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Taktik feedback klik untuk semua tombol, select, dan menu navigasi */
+button, .pill-opt, .btn, select, .nav-item, .bottom-nav-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+button:active, .pill-opt:active, .btn:active, .nav-item:active, .bottom-nav-item:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
 
 /* Sidebar */
 .sidebar{width:var(--sidebar-w);background:var(--meadow);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 12px;position:fixed;top:0;left:0;height:100vh;z-index:100;gap:32px}
@@ -443,6 +460,13 @@ tr:last-child td{border-bottom:none}
   }
 
   checkAuth()
+
+    // Pemicu transisi halaman saat WebView selesai memuat dokumen
+  document.addEventListener("DOMContentLoaded", () => {
+    requestAnimationFrame(() => {
+      document.body.classList.add("page-loaded");
+    });
+  });
 </script>
 </body>
 </html>
