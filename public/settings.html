@@ -22,7 +22,7 @@
   --red-bg:    #fdebec; --red-tx:   #9f2f2d;
   --sidebar-w: 220px;
   --pill:      1440px;
-  --radius:    12px;
+  --radius: 12px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
@@ -253,18 +253,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           </div>
           <div class="field">
             <div class="field-label">Default Provider</div>
+            
+            <!-- Bersihkan pilihan hardcoded manual -->
             <select id="providerSelect" onchange="setProvider(this.value)">
               <option value="auto_router">Auto Router</option>
-              <option value="groq">Groq (Llama)</option>
-              <option value="github_gpt">GitHub (GPT)</option>
-              <option value="nvidia_qwen">NVIDIA NIM (Qwen)</option>
-              <option value="nvidia_deepseek">NVIDIA NIM (DeepSeek)</option>
-              <option value="nvidia_z_ai">NVIDIA NIM (GLM)</option>
-              <option value="kilo">Kilo Gateway (Claude)</option>
-              <option value="cerebras">Cerebras (Gemma)</option>
-              <option value="github_mistral">GitHub (Mistral)</option>
-              <option value="google_gemini">Google · Gemini</option>
             </select>
+            
             <div class="field-hint">Disimpan ke <code style="font-family:monospace;background:var(--meadow);padding:1px 5px;border-radius:3px">kr_default_provider</code></div>
           </div>
         </div>
@@ -360,7 +354,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     if (e.key === 'Enter') submitToken()
   })
 
-  function init() {
+  // FUNGSI UTAMA: Load data terpusat dari server & pasang setelan default browser
+  async function init() {
     // Prefill token field (masked)
     document.getElementById('tokenInput').value = token ? '••••••••' : ''
 
@@ -370,9 +365,34 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       btn.classList.toggle('active', btn.dataset.val === savedEffort)
     })
 
-    // Load default provider
-    const savedProvider = localStorage.getItem('kr_default_provider') || 'auto_router'
+    // Sinkronisasi data dinamis untuk select dropdown settings
     const sel = document.getElementById('providerSelect')
+    try {
+      const res = await fetch('/api/status', {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        
+        // Reset dan amankan opsi dasar Auto Router
+        sel.innerHTML = '<option value="auto_router">Auto Router</option>'
+        
+        // Suntik data model dari Buku Induk Backend secara otomatis
+        if (data.providers) {
+          data.providers.forEach(p => {
+            const opt = document.createElement('option')
+            opt.value = p.id
+            opt.textContent = p.name
+            sel.appendChild(opt)
+          })
+        }
+      }
+    } catch (err) {
+      console.error("Gagal sinkronisasi data rute ke menu settings:", err)
+    }
+
+    // Terapkan default provider tersimpan SETELAH elemen opsi berhasil di-generate
+    const savedProvider = localStorage.getItem('kr_default_provider') || 'auto_router'
     sel.value = savedProvider
 
     // Render storage list
@@ -394,7 +414,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     const input = document.getElementById('tokenInput').value.trim()
     const statusEl = document.getElementById('tokenStatus')
 
-    // Kalau field diisi dengan placeholder masked, tidak update
     if (!input || input === '••••••••') {
       statusEl.className = 'inline-status err'
       statusEl.textContent = 'Masukkan token baru dulu'
@@ -417,7 +436,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       document.getElementById('tokenInput').value = '••••••••'
       statusEl.className = 'inline-status ok'
       statusEl.textContent = 'Tersimpan'
-      renderStorage()
+      
+      // Jalankan ulang init agar daftar dropdown dimuat ulang dengan token baru
+      init()
     } catch {
       statusEl.className = 'inline-status err'
       statusEl.textContent = 'Gagal terhubung'
@@ -430,7 +451,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     document.getElementById('tokenInput').value = ''
     document.getElementById('tokenStatus').className = 'inline-status'
     renderStorage()
-    // Show overlay
     document.getElementById('overlay').style.display = 'flex'
   }
 
@@ -456,4 +476,4 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   checkAuth()
 </script>
 </body>
-</html>
+  </html>
