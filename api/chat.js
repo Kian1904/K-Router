@@ -81,11 +81,6 @@ module.exports = async function handler(req, res) {
   const effortParams = EFFORT_MAP[effort] || EFFORT_MAP.medium;
   const startTime = Date.now();
 
-// ========================================================
-  // JALUR KHUSUS 1: LANGSUNG KE PABRIK QWEN ALIBABA
-  // ========================================================
-  if (provider === '
-
   // ========================================================
   // ENGINE UTAMA: AUTO ROUTING & FALLBACK SYSTEM (CASCADE)
   // ========================================================
