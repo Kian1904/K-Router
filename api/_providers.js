@@ -15,12 +15,12 @@ const PROVIDERS = {
     model: 'openai/gpt-4o-mini',
     type: 'openai'
   },
-  nvidia_qwen: {
-    name: 'NVIDIA NIM (Qwen)',
-    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    key: 'NVIDIA_API_KEY',
-    model: 'qwen/qwen3.5-397b-a17b',
-    type: 'openai'
+  qwen_max: {
+    name: 'Qwen 3.7 (Max)',
+    url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
+    key: 'DASHSCOPE_API_KEY',
+    model: 'qwen3.7-max',
+    type: 'alibaba'
   },
   nvidia_deepseek: {
     name: 'NVIDIA NIM (DeepSeek)',
