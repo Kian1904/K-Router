@@ -952,7 +952,12 @@
       const data = await res.json();
       
       // Reset dropdown bawaan tapi amankan opsi Auto & Compare
-      providerSelect.innerHTML = '<option value="">Auto Router</option><option value="compare">⚔️ Compare Mode</option>';
+      providerSelect.innerHTML = `
+        <option value="">Auto Router</option>
+        <option value="compare">⚔️ Compare Mode</option>
+        <option value="qwen3.7-plus">Qwen 3.7 Plus (Speed)</option>
+        <option value="qwen3.7-max">Qwen 3.7 Max (Brain)</option>
+      `;
       
       // Inject otomatis model hasil tarikan dari Buku Induk Backend
       data.providers.forEach(prov => {
