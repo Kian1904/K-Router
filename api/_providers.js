@@ -1,6 +1,32 @@
 // api/_providers.js
 
 const PROVIDERS = {
+  cohere_north: {
+    name: 'Cohere · North Mini Code',
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: 'OPENROUTER_API_KEY',
+    model: 'cohere/north-mini-code:free',
+    type: 'openai',
+    isRedflag: false
+  },
+  laguna_xs: {
+    name: 'Poolside · Laguna XS 2.1',
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: 'OPENROUTER_API_KEY',
+    model: 'poolside/laguna-xs-2.1:free',
+    type: 'openai',
+    isRedflag: true,
+    redflagReason: 'Volatile infrastructure / Nvidia NIM scale risk'
+  },
+  laguna_m1: {
+    name: 'Poolside · Laguna M.1',
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: 'OPENROUTER_API_KEY',
+    model: 'poolside/laguna-m.1:free',
+    type: 'openai',
+    isRedflag: true,
+    redflagReason: 'Unstable response / Volatile free tier session'
+  },
   groq: {
     name: 'Groq (Llama)',
     url: 'https://api.groq.com/openai/v1/chat/completions',
@@ -13,27 +39,6 @@ const PROVIDERS = {
     url: 'https://models.github.ai/inference/chat/completions',
     key: 'GITHUB_TOKEN',
     model: 'openai/gpt-4o-mini',
-    type: 'openai'
-  },
-  qwen_plus: {
-    name: 'Qwen 3.7 (Plus)',
-    url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
-    key: 'DASHSCOPE_API_KEY',
-    model: 'qwen3.7-plus',
-    type: 'alibaba'
-  },
-  qwen_max: {
-    name: 'Qwen 3.7 (Max)',
-    url: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions',
-    key: 'DASHSCOPE_API_KEY',
-    model: 'qwen3.7-max',
-    type: 'alibaba'
-  },
-  nvidia_deepseek: {
-    name: 'NVIDIA NIM (DeepSeek)',
-    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    key: 'NVIDIA_API_KEY',
-    model: 'deepseek-ai/deepseek-v4-pro',
     type: 'openai'
   },
   nvidia_z_ai: {
