@@ -9,6 +9,30 @@ const PROVIDERS = {
     type: 'openai',
     isRedflag: false
   },
+  nvidia_phi4: {
+    name: 'NVIDIA NIM (Phi-4 Mini)',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: 'NVIDIA_API_KEY',
+    model: 'microsoft/phi-4-mini-instruct',
+    type: 'openai',
+    isRedflag: false
+  },
+  nvidia_minimax: {
+    name: 'NVIDIA NIM (MiniMax M2.7)',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: 'NVIDIA_API_KEY',
+    model: 'minimax/m2.7-chat',
+    type: 'openai',
+    isRedflag: false
+  },
+  nvidia_deepseek_flash: {
+    name: 'NVIDIA NIM (DeepSeek V4 Flash)',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: 'NVIDIA_API_KEY',
+    model: 'deepseek-ai/deepseek-v4-flash',
+    type: 'openai',
+    isRedflag: false
+  },
   laguna_xs: {
     name: 'Poolside · Laguna XS 2.1',
     url: 'https://openrouter.ai/api/v1/chat/completions',
@@ -33,6 +57,14 @@ const PROVIDERS = {
     key: 'GROQ_API_KEY',
     model: 'llama-3.3-70b-versatile',
     type: 'openai'
+  },
+  nvidia_deepseek: {
+    name: 'NVIDIA NIM (DeepSeek V4 Pro)',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: 'NVIDIA_API_KEY',
+    model: 'deepseek-ai/deepseek-v4-pro',
+    type: 'openai',
+    isRedflag: false
   },
   github_gpt: {
     name: 'GitHub (GPT)',
@@ -78,7 +110,6 @@ const PROVIDERS = {
   }
 };
 
-// Menghasilkan array otomatis berisi semua key di atas untuk fallback system
 const CASCADE = Object.keys(PROVIDERS);
 
 module.exports = { PROVIDERS, CASCADE };
