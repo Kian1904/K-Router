@@ -128,7 +128,8 @@ module.exports = async function handler(req, res) {
         fetchHeaders = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey };
         fetchBody = {
           model: p.model, messages, stream: false,
-          temperature: effortParams.temperature, max_tokens: effortParams.max_tokens,
+          temperature: id === 'nvidia_phi4' ? 0.1 : effortParams.temperature, // <-- PUKUL PHI DI SINI BIAR GAK MABOK SPANYOL!
+          max_tokens: effortParams.max_tokens,
           ...rest
         };
 
