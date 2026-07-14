@@ -207,8 +207,6 @@ async function handleCommand(rawInput) {
     default:
       printLine(`Command not found: '${command}'. Ketik '/help' untuk daftar fungsi.`, 'error-msg');
   }
-          }
-  }
 }
 
 inputEl.addEventListener('keydown', async (e) => {
