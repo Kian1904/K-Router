@@ -2,5 +2,7 @@
   "functions": {
     "api/chat.js": { "maxDuration": 60 },
     "api/status.js": { "maxDuration": 15 }
+    "source": "/",
+      "destination": "/terminal.html"
   }
 }
