@@ -14,6 +14,48 @@ function printLine(text, className = '') {
   outputEl.scrollTop = outputEl.scrollHeight;
 }
 
+// Function untuk membedah input teks menjadi struktur CLI Standar (Command, Args, Flags)
+function parseCLIInput(rawInput) {
+  const parts = rawInput.trim().split(/\s+/); // Split berdasarkan spasi (multi-space safe)
+  const command = parts[0];
+  const flags = {};
+  const positionalArgs = [];
+
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+    
+    // Cek kalau ini adalah Double Hyphen Flag (e.g., --effort high atau --force)
+    if (part.startsWith('--')) {
+      const flagName = part.slice(2);
+      // Cek apakah flag ini butuh value di argumen setelahnya
+      if (['effort', 'model', 'provider'].includes(flagName) && i + 1 < parts.length && !parts[i+1].startsWith('-')) {
+        flags[flagName] = parts[i+1];
+        i++; // Skip indeks berikutnya karena sudah diambil jadi value
+      } else {
+        flags[flagName] = true; // Flag boolean biasa (e.g., --force)
+      }
+    } 
+    // Cek kalau ini Single Hyphen Flag short-hand (e.g., -e high atau -f)
+    else if (part.startsWith('-')) {
+      const flagName = part.slice(1);
+      if (flagName === 'e' && i + 1 < parts.length) { flags['effort'] = parts[i+1]; i++; }
+      else if (flagName === 'm' && i + 1 < parts.length) { flags['model'] = parts[i+1]; i++; }
+      else if (flagName === 'f') { flags['force'] = true; }
+      else { flags[flagName] = true; }
+    } 
+    // Jika bukan flag, masukkan ke positional arguments (isi pesan/query utama)
+    else {
+      positionalArgs.push(part);
+    }
+  }
+
+  return {
+    command: command.toLowerCase(),
+    flags,
+    payload: positionalArgs.join(' ') // Digabung kembali jadi string teks utuh
+  };
+}
+
 async function handleCommand(rawInput) {
   const trimInput = rawInput.trim();
   if (!trimInput) return;
