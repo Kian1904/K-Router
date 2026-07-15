@@ -2,6 +2,7 @@
  * K-Router UI Controller (DOM Penguasa & Store Subscriber)
  */
 import { store } from '../core/store.js';
+import { commandProcessor } from '../core/commands.js';
 
 // Elements Cache (Biar gak bolak-balik nembak document.getElementById, hemat CPU!)
 let outputEl = null;
@@ -42,8 +43,10 @@ export const terminalUI = {
 
   // Logika pembongkar input user sebelum dioper ke folder core
   handleUserInput(input) {
-    this.printToScreen(`\n<span class="user-input">> ${input}</span>`);
-
+    this.printToScreen(`\n<span class="user-input">> ${input}</span>`); 
+    commandProcessor.process(input);
+  },
+  
     // Di sesi berikutnya, bagian ini bakal manggil fungsi dari folder core/commands.js
     // Sementara kita test simulasi mutasi langsung di sini:
     if (input.startsWith('/use ')) {
