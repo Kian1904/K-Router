@@ -36,41 +36,55 @@ async function runMultiAgentWorkflow(taskPrompt) {
   printLine(`\n[01] [MANAGER] Analyzing master task: "${taskPrompt}"...`, 'info-msg');
   
   try {
-    // Langkah 1: Panggil Manager untuk bikin Task Breakdowns (Minta format JSON terstruktur)
+    // 1. Tweak Prompt: Kita paksa pake kata-kata "RAW JSON ONLY" dan larang keras markdown block
     const managerRes = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({
         messages: [{ 
           role: 'user', 
-          content: `Ubah tugas ini menjadi 2 sub-task terpisah (1 untuk coding, 1 untuk dokumentasi). 
-                   Format wajib JSON persis seperti ini tanpa teks lain:
-                   {"coding": "isi tugas coding", "docs": "isi tugas dokumentasi"}
+          content: `You are a strict Project Manager Agent. Break down this task into exactly 2 sub-tasks: 1 for coding, 1 for documentation.
                    
-                   TUGAS MASTER: ${taskPrompt}` 
+                   CRITICAL RULE: Output MUST be a raw JSON object only. Do NOT include markdown blocks like \`\`\`json, do NOT include conversational text, do NOT include explanations. Just raw JSON text.
+                   
+                   Format structure:
+                   {"coding": "detailed coding task instruction", "docs": "detailed documentation task instruction"}
+                   
+                   MASTER TASK TO PROCESS: ${taskPrompt}` 
         }],
-        provider: 'auto_router', // Biar router nyari model terbaik untuk planning
+        provider: 'auto_router',
         effort: 'medium'
       })
     });
 
     if (!managerRes.ok) throw new Error("Manager failed to plan workflow.");
     const managerData = await managerRes.json();
-    const planText = managerData.choices[0].message.content;
+    let planText = managerData.choices[0].message.content.trim();
     
-    // Parsing JSON dari Manager
+    // 2. Robust JSON Extractor Logic (Membabat habis teks sampah sebelum dan sesudah kurung kurawal)
     let plan;
     try {
-      plan = JSON.parse(planText.match(/\{[\s\S]*\}/)[0]);
+      const firstBrace = planText.indexOf('{');
+      const lastBrace = planText.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        // Ambil murni dari '{' sampai '}' paling ujung
+        const cleanJsonString = planText.substring(firstBrace, lastBrace + 1);
+        plan = JSON.parse(cleanJsonString);
+      } else {
+        throw new Error("No braces found");
+      }
     } catch(e) {
-      throw new Error("Gagal mengekstrak JSON planning dari Manager. Coba lagi.");
+      // Jika gagal, cetak bocoran teks asli dari AI di terminal biar lo tau dia ngomong apa
+      printLine(`[Debug Log] Raw AI Output: ${planText}`, 'warn-msg');
+      throw new Error("AI tidak mengembalikan format JSON yang valid.");
     }
 
     printLine(`\n[02] [TASK MANAGED] Workspace allocation successful:`, 'sys-greet');
     printLine(`  ├── Coding Target : ${plan.coding}`);
     printLine(`  └── Docs Target   : ${plan.docs}`);
 
-    // Langkah 2: Kirim ke Agent ANTIGRAVITY (Builder) untuk ngerjain kodingannya
+    // 3. Jalankan Agent ANTIGRAVITY (Builder)
     printLine(`\n[03] [EXECUTE] Routing task to ANTIGRAVITY (${virtualWorkspace.agents.antigravity.model})...`, 'info-msg');
     const builderRes = await fetch('/api/chat', {
       method: 'POST',
@@ -78,14 +92,14 @@ async function runMultiAgentWorkflow(taskPrompt) {
       body: JSON.stringify({
         messages: [{ role: 'user', content: plan.coding }],
         provider: virtualWorkspace.agents.antigravity.model,
-        effort: 'high' // Set effort tinggi karena tugas coding kompleks
+        effort: 'high'
       })
     });
     const builderData = await builderRes.json();
     const codeResult = builderData.choices[0].message.content;
     printLine(`✔ [ANTIGRAVITY] Task completed standard validation.`, 'sys-greet');
 
-    // Langkah 3: Kirim ke Agent BLACKBOX (Writer) untuk bikin dokumentasi teknisnya
+    // 4. Jalankan Agent BLACKBOX (Writer)
     printLine(`\n[04] [EXECUTE] Routing log compilation to BLACKBOX (${virtualWorkspace.agents.blackbox.model})...`, 'info-msg');
     const writerRes = await fetch('/api/chat', {
       method: 'POST',
@@ -93,14 +107,14 @@ async function runMultiAgentWorkflow(taskPrompt) {
       body: JSON.stringify({
         messages: [{ role: 'user', content: `Bikin dokumentasi singkat Markdown berdasarkan kodingan ini:\n\n${codeResult}` }],
         provider: virtualWorkspace.agents.blackbox.model,
-        effort: 'low' // Model murah, effort low biar hemat token
+        effort: 'low'
       })
     });
     const writerData = await writerRes.json();
     const docsResult = writerData.choices[0].message.content;
     printLine(`✔ [BLACKBOX] Log update and documentation compiled.`, 'sys-greet');
 
-    // Langkah 4: Tampilkan Output Agregasi Akhir Terminal
+    // 5. Render Hasil Akhir ke Konsol
     printLine('\n==================== WORKSPACE AGENT OUTPUT ====================', 'info-msg');
     printLine('### [Task.md - Main Source of Truth]');
     printLine(docsResult);
@@ -112,4 +126,4 @@ async function runMultiAgentWorkflow(taskPrompt) {
   } catch (err) {
     printLine(`Multi-Agent Pipeline Crash: ${err.message}`, 'error-msg');
   }
-      }
+}
