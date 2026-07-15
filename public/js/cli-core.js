@@ -67,10 +67,13 @@ async function handleCommand(rawInput) {
     return;
   }
 
+  // Ambil arguments array untuk subcommand primitive
+  const args = trimInput.split(' ');
+  
   // Panggil parser CLI sakti kita di sini
   const cli = parseCLIInput(rawInput);
 
-  if (['/dashboard', '/analytics', '/models', '/chat', '/search'].includes(cli.command) && !token) {
+  if (['/dashboard', '/analytics', '/models', '/chat', '/search', '/repo', '/debug'].includes(cli.command) && !token) {
     printLine("Error: Akses ditolak. Jalankan perintah: /auth [TOKEN_LO]", "error-msg");
     return;
   }
@@ -84,17 +87,21 @@ async function handleCommand(rawInput) {
       printLine('===================== K-ROUTER CLI ADVANCED MANUAL =====================');
       printLine('  /help                           Tampilkan panduan ini');
       printLine('  /clear                          Bersihkan layar');
-      printLine('  /auth [Token]                   Input token keamanan');
+      printLine('  /auth [Token]                   Input token keamanan gerbang router');
       printLine('  /models                         List semua model terkelompok');
       printLine('  /use [model_id]                 Kunci chat ke model tertentu');
       printLine('  /effort [low/medium/high]       Ubah default effort global');
       printLine('  /search [query]                 Cari info real-time via Tavily');
+      printLine('  /agent status                   Cek dashboard status Multi-Agent');
+      printLine('  /agent run [tugas]              Jalankan pipeline otomatisasi agen');
+      printLine('  /repo set [gh_token] [owner] [repo]  Konek terowongan ke GitHub API');
+      printLine('  /repo [path_folder]             Intip struktur file repository');
+      printLine('  /debug [path_file]              Autopilot bug scanner pada target file');
       printLine('  /chat [opsi] [pesan]            Kirim pesan ke AI');
       printLine('     Opsi Tersedia:');
       printLine('       -e, --effort [level]       Override effort khusus untuk chat ini');
       printLine('       -m, --model [id]           Override model khusus untuk chat ini');
       printLine('       -f, --force                Paksa kirim payload besar (>5000 karakter)');
-      printline('  /agent                          menampilkan agents work');
       printLine('========================================================================');
       break;
 
@@ -114,14 +121,12 @@ async function handleCommand(rawInput) {
         return;
       }
 
-      // Evaluasi flag proteksi --force atau -f
       if (cli.payload.length > 5000 && !cli.flags.force) {
         printLine('[Warning]: Ukuran teks terlalu besar! Risiko memicu limit token 429.', 'warn-msg');
         printLine('Gunakan flag -f atau --force untuk memaksa. Contoh: /chat -f [isi_file]', 'warn-msg');
         return;
       }
 
-      // Tentukan param secara dinamis berdasarkan flag runtime atau state default
       const activeModel = cli.flags.model || selectedModelId;
       const activeEffort = cli.flags.effort || currentEffort;
 
@@ -179,17 +184,25 @@ async function handleCommand(rawInput) {
       }
       break;
 
-      case '/agent':
-      const subCommand = args[1]?.toLowerCase();
-      if (subCommand === 'status') {
-        renderAgentStatus();
-      } else if (subCommand === 'run') {
+    case '/agent':
+      const agentSub = args[1]?.toLowerCase();
+      if (agentSub === 'status') {
+        if (typeof renderAgentStatus === 'function') {
+          renderAgentStatus();
+        } else {
+          printLine('Error: Modul cli-agents.js belum ter-load di index.html.', 'error-msg');
+        }
+      } else if (agentSub === 'run') {
         const agentTask = args.slice(2).join(' ');
         if (!agentTask) {
           printLine('Error: Masukkan instruksi tugas agen. Contoh: /agent run bikin sistem login', 'error-msg');
           return;
         }
-        runMultiAgentWorkflow(agentTask);
+        if (typeof runMultiAgentWorkflow === 'function') {
+          runMultiAgentWorkflow(agentTask);
+        } else {
+          printLine('Error: Modul cli-agents.js belum ter-load di index.html.', 'error-msg');
+        }
       } else {
         printLine('Panduan Perintah Agen:', 'info-msg');
         printLine('  /agent status        - Cek kesehatan & jenis arsitektur model agen');
@@ -197,8 +210,42 @@ async function handleCommand(rawInput) {
       }
       break;
 
-    // ... case /models, /use, /dashboard, /analytics tinggal panggil cli.payload jika butuh argumen tambahan
-    // Tetap pertahankan kodingan fetch log/status lo yang kemarin di sini ya!
+    case '/repo':
+      if (args[1] === 'set') {
+        if (!args[2] || !args[3] || !args[4]) {
+          printLine('Error: Format salah. Gunakan: /repo set [TOKEN] [OWNER] [REPO]', 'error-msg');
+          return;
+        }
+        localStorage.setItem('kr_gh_token', args[2]);
+        localStorage.setItem('kr_gh_owner', args[3]);
+        localStorage.setItem('kr_gh_repo', args[4]);
+        
+        // Update live variable di modul repo jika ter-load
+        if (typeof githubToken !== 'undefined') {
+          githubToken = args[2]; repoOwner = args[3]; repoName = args[4];
+        }
+        printLine('Success: Terowongan integrasi GitHub API aktif!', 'sys-greet');
+      } else {
+        if (typeof listRepositoryFiles === 'function') {
+          await listRepositoryFiles(args[1] || '');
+        } else {
+          printLine('Error: Modul cli-repo.js belum ter-load di index.html.', 'error-msg');
+        }
+      }
+      break;
+
+    case '/debug':
+      if (!args[1]) {
+        printLine('Error: Masukkan file target. Contoh: /debug api/chat.js', 'error-msg');
+        return;
+      }
+      if (typeof debugTargetFile === 'function') {
+        await debugTargetFile(args[1]);
+      } else {
+        printLine('Error: Modul cli-repo.js belum ter-load di index.html.', 'error-msg');
+      }
+      break;
+
     default:
       printLine(`Command not found: '${cli.command}'. Ketik '/help' untuk daftar fungsi.`, 'error-msg');
   }
@@ -217,4 +264,4 @@ inputEl.addEventListener('keydown', async (e) => {
 
 document.body.addEventListener('click', () => inputEl.focus());
 if(token) printLine(`System: Secure token active. Mode effort [${currentEffort.toUpperCase()}] standby.`, "sys-greet");
-else printLine("Warning: Token required. Silakan jalankan perintah 'auth [token_lo]'.", "warn-msg");
+else printLine("Warning: Token required. Silakan jalankan perintah '/auth [token_lo]'.", "warn-msg");
