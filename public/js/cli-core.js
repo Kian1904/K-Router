@@ -94,6 +94,7 @@ async function handleCommand(rawInput) {
       printLine('       -e, --effort [level]       Override effort khusus untuk chat ini');
       printLine('       -m, --model [id]           Override model khusus untuk chat ini');
       printLine('       -f, --force                Paksa kirim payload besar (>5000 karakter)');
+      printline('  /agent                          menampilkan agents work');
       printLine('========================================================================');
       break;
 
@@ -175,6 +176,24 @@ async function handleCommand(rawInput) {
         printLine('[========================================================]\n');
       } catch (err) {
         printLine(`Search crash: ${err.message}`, 'error-msg');
+      }
+      break;
+
+      case '/agent':
+      const subCommand = args[1]?.toLowerCase();
+      if (subCommand === 'status') {
+        renderAgentStatus();
+      } else if (subCommand === 'run') {
+        const agentTask = args.slice(2).join(' ');
+        if (!agentTask) {
+          printLine('Error: Masukkan instruksi tugas agen. Contoh: /agent run bikin sistem login', 'error-msg');
+          return;
+        }
+        runMultiAgentWorkflow(agentTask);
+      } else {
+        printLine('Panduan Perintah Agen:', 'info-msg');
+        printLine('  /agent status        - Cek kesehatan & jenis arsitektur model agen');
+        printLine('  /agent run [tugas]   - Jalankan workflow otomatisasi multi-agent');
       }
       break;
 
