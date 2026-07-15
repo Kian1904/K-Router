@@ -52,13 +52,13 @@ async function runMultiAgentWorkflow(taskPrompt) {
                    
                    MASTER TASK TO PROCESS: ${taskPrompt}` 
         }],
-        provider: 'auto_router',
-        effort: 'medium'
+        provider: "",
+        effort: 'high'
       })
     });
-
-    if (!managerRes.ok) throw new Error("Manager failed to plan workflow.");
-    const managerData = await managerRes.json();
+    if (!managerRes.ok) {
+      throw new Error(`Serverless HTTP Error [${managerRes.status}] - Hubungan ke /api/chat diputus server.`);
+    }
     let planText = managerData.choices[0].message.content.trim();
     
     // 2. Robust JSON Extractor Logic (Membabat habis teks sampah sebelum dan sesudah kurung kurawal)
