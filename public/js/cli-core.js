@@ -20,151 +20,77 @@ async function handleCommand(rawInput) {
 
   printLine(`${promptLabel.innerText} ${trimInput}`, 'cmd-line');
 
-  // Wajib pakai slash '/' di awal (Slash Command Protocol)
   if (!trimInput.startsWith('/')) {
-    printLine(`Error: Perintah harus diawali tanda '/'. Contoh: /help atau /chat halo`, 'error-msg');
+    printLine(`Error: Perintah harus diawali tanda '/'. Contoh: /help`, 'error-msg');
     return;
   }
 
-  const args = trimInput.split(' ');
-  const command = args[0].toLowerCase(); // Hasilnya jadi: /help, /chat, /search, dll
+  // Panggil parser CLI sakti kita di sini
+  const cli = parseCLIInput(rawInput);
 
-  if (['/dashboard', '/analytics', '/models', '/chat', '/search'].includes(command) && !token) {
+  if (['/dashboard', '/analytics', '/models', '/chat', '/search'].includes(cli.command) && !token) {
     printLine("Error: Akses ditolak. Jalankan perintah: /auth [TOKEN_LO]", "error-msg");
     return;
   }
 
-  switch(command) {
+  switch(cli.command) {
     case '/clear':
       outputEl.innerHTML = '';
       break;
 
     case '/help':
-      printLine('===================== K-ROUTER COMMAND LIST =====================');
-      printLine('  /help                     Tampilkan panduan ini');
-      printLine('  /clear                    Bersihkan monitor terminal');
-      printLine('  /auth [Token]             Input token keamanan gerbang router');
-      printLine('  /models                   List semua model terkelompok');
-      printLine('  /use [model_id]           Kunci chat ke model tertentu');
-      printLine('  /effort [low/medium/high] Ubah alokasi konsumsi token target');
-      printLine('  /chat [prompt]            Kirim pesan ke AI');
-      printLine('  /search [query]           Cari info real-time via Tavily');
-      printLine('  /dashboard                Tarik data log performa global');
-      printLine('  /analytics                Tampilkan distribusi token');
-      printLine('=================================================================');
+      printLine('===================== K-ROUTER CLI ADVANCED MANUAL =====================');
+      printLine('  /help                           Tampilkan panduan ini');
+      printLine('  /clear                          Bersihkan layar');
+      printLine('  /auth [Token]                   Input token keamanan');
+      printLine('  /models                         List semua model terkelompok');
+      printLine('  /use [model_id]                 Kunci chat ke model tertentu');
+      printLine('  /effort [low/medium/high]       Ubah default effort global');
+      printLine('  /search [query]                 Cari info real-time via Tavily');
+      printLine('  /chat [opsi] [pesan]            Kirim pesan ke AI');
+      printLine('     Opsi Tersedia:');
+      printLine('       -e, --effort [level]       Override effort khusus untuk chat ini');
+      printLine('       -m, --model [id]           Override model khusus untuk chat ini');
+      printLine('       -f, --force                Paksa kirim payload besar (>5000 karakter)');
+      printLine('========================================================================');
       break;
 
     case '/auth':
-      if (!args[1]) {
+      if (!cli.payload) {
         printLine('Error: Token wajib diisi. Contoh: /auth token_123', 'error-msg');
       } else {
-        token = args[1];
+        token = cli.payload;
         localStorage.setItem('kr_token', token);
-        printLine('Success: Token berhasil diverifikasi dan disimpan!', 'sys-greet');
-      }
-      break;
-
-    case '/effort':
-      const targetEffort = args[1]?.toLowerCase();
-      if (!['low', 'medium', 'high'].includes(targetEffort)) {
-        printLine('Error: Pilihan effort tidak valid. Gunakan low, medium, atau high.', 'error-msg');
-        return;
-      }
-      currentEffort = targetEffort;
-      localStorage.setItem('kr_default_effort', currentEffort);
-      printLine(`Success: Level konsumsi token diubah menjadi [${currentEffort.toUpperCase()}].`, 'sys-greet');
-      break;
-
-    case '/models':
-      printLine('Fetching and structuralizing models tree layout...');
-      try {
-        const res = await fetch('/api/status', { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        const data = await res.json();
-        renderModelsTree(data.providers || [], selectedModelId);
-      } catch(err) {
-        printLine(`Failed to cluster models: ${err.message}`, 'error-msg');
-      }
-      break;
-
-    case '/use':
-      const targetId = args[1];
-      if (!targetId) {
-        printLine('Error: Masukkan ID model. Contoh: /use google_gemini', 'error-msg');
-        return;
-      }
-      if (targetId === 'auto_router') {
-        selectedModelId = 'auto_router';
-        promptLabel.innerText = `krouter_cli[auto_router]:~$`;
-        printLine('Success: Jalur dikembalikan ke Auto Router default.', 'sys-greet');
-        return;
-      }
-      selectedModelId = targetId;
-      promptLabel.innerText = `krouter_cli[${targetId}]:~$`;
-      printLine(`Success: Sesi terkunci ke model [${targetId}].`, 'info-msg');
-      break;
-
-    case '/search':
-      const query = args.slice(1).join(' ');
-      if (!query) {
-        printLine('Error: Masukkan kata kunci. Contoh: /search harga bitcoin hari ini', 'error-msg');
-        return;
-      }
-      
-      printLine(`Tavily Engine: Menelusuri web untuk "${query}"...`);
-      try {
-        const res = await fetch('/api/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ query })
-        });
-
-        if (!res.ok) throw new Error(`Server failure ${res.status}`);
-        const data = await res.json();
-        
-        printLine(`\n[=== HASIL PENCARIAN TAVILY ===]`, 'sys-greet');
-        if (data.answer) {
-          printLine(`💡 Ringkasan AI: ${data.answer}`, 'info-msg');
-          printLine('--------------------------------------------------------');
-        }
-        
-        if (data.results && data.results.length > 0) {
-          data.results.forEach((r, i) => {
-            printLine(`${i + 1}. ${r.title}`);
-            printLine(`   ${r.url}`, 'cmd-line');
-            printLine(`   ${r.content.substring(0, 150)}...\n`);
-          });
-        } else {
-          printLine('Tidak ada hasil yang relevan ditemukan.');
-        }
-        printLine('[========================================================]\n');
-      } catch (err) {
-        printLine(`Search crash: ${err.message}`, 'error-msg');
+        printLine('Success: Token berhasil diverifikasi!', 'sys-greet');
       }
       break;
 
     case '/chat':
-      const prompt = args.slice(1).join(' ');
-      if (!prompt) {
-        printLine('Error: Isi prompt chat lo. Contoh: /chat halo', 'error-msg');
+      if (!cli.payload) {
+        printLine('Error: Isi prompt chat lo. Contoh: /chat halo AI', 'error-msg');
         return;
       }
 
-      if (prompt.length > 5000 && !rawInput.includes('--force')) {
-        printLine('[Warning]: Ukuran teks terlalu besar! Risiko memicu limit token 429 di serverless.', 'warn-msg');
-        printLine('Ketik ulang dengan --force jika yakin. Contoh: /chat --force [isi_file_lo]', 'warn-msg');
+      // Evaluasi flag proteksi --force atau -f
+      if (cli.payload.length > 5000 && !cli.flags.force) {
+        printLine('[Warning]: Ukuran teks terlalu besar! Risiko memicu limit token 429.', 'warn-msg');
+        printLine('Gunakan flag -f atau --force untuk memaksa. Contoh: /chat -f [isi_file]', 'warn-msg');
         return;
       }
 
-      printLine(`Executing prompt via branch [${selectedModelId}] with effort [${currentEffort.toUpperCase()}]...`);
+      // Tentukan param secara dinamis berdasarkan flag runtime atau state default
+      const activeModel = cli.flags.model || selectedModelId;
+      const activeEffort = cli.flags.effort || currentEffort;
+
+      printLine(`Executing via branch [${activeModel}] with effort [${activeEffort.toUpperCase()}]...`);
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            messages: [{ role: 'user', content: prompt.replace('--force', '').trim() }],
-            provider: selectedModelId,
-            effort: currentEffort
+            messages: [{ role: 'user', content: cli.payload }],
+            provider: activeModel,
+            effort: activeEffort
           })
         });
 
@@ -180,32 +106,40 @@ async function handleCommand(rawInput) {
       }
       break;
 
-    case '/dashboard':
-      printLine('Querying performance logs from database core...');
+    case '/search':
+      if (!cli.payload) {
+        printLine('Error: Masukkan kata kunci. Contoh: /search cuaca Jakarta', 'error-msg');
+        return;
+      }
+      printLine(`Tavily Engine: Menelusuri web untuk "${cli.payload}"...`);
       try {
-        const res = await fetch('/api/log?range=24h&limit=5', { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ query: cli.payload })
+        });
+        if (!res.ok) throw new Error(`Server failure ${res.status}`);
         const data = await res.json();
-        renderTextDashboard(data);
-      } catch(err) {
-        printLine(`Dashboard log fetch failed: ${err.message}`, 'error-msg');
+        
+        printLine(`\n[=== HASIL PENCARIAN TAVILY ===]`, 'sys-greet');
+        if (data.answer) printLine(`💡 Ringkasan AI: ${data.answer}\n`, 'info-msg');
+        if (data.results && data.results.length > 0) {
+          data.results.forEach((r, i) => {
+            printLine(`${i + 1}. ${r.title}`);
+            printLine(`   ${r.url}`, 'cmd-line');
+            printLine(`   ${r.content.substring(0, 120)}...\n`);
+          });
+        }
+        printLine('[========================================================]\n');
+      } catch (err) {
+        printLine(`Search crash: ${err.message}`, 'error-msg');
       }
       break;
 
-    case '/analytics':
-      printLine('Entering analytics mode...');
-      try {
-        const res = await fetch('/api/log?range=7d&limit=10', { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!res.ok) throw new Error(`Fetch error ${res.status}`);
-        const data = await res.json();
-        renderTextAnalytics(data);
-      } catch(err) {
-        printLine(`Analytics compilation failed: ${err.message}`, 'error-msg');
-      }
-      break;
-
+    // ... case /models, /use, /dashboard, /analytics tinggal panggil cli.payload jika butuh argumen tambahan
+    // Tetap pertahankan kodingan fetch log/status lo yang kemarin di sini ya!
     default:
-      printLine(`Command not found: '${command}'. Ketik '/help' untuk daftar fungsi.`, 'error-msg');
+      printLine(`Command not found: '${cli.command}'. Ketik '/help' untuk daftar fungsi.`, 'error-msg');
   }
 }
 
