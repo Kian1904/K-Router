@@ -11,29 +11,37 @@ let promptLabelEl = null;
 
 export const terminalUI = {
   init() {
-    // 1. Ambil & kunci elemen HTML ke memori cache
-    outputEl = document.getElementById('terminal-output');
-    inputEl = document.getElementById('terminal-input');
-    promptLabelEl = document.getElementById('prompt-label');
+  outputEl = document.getElementById('terminal-output');
+  inputEl = document.getElementById('terminal-input');
+  promptLabelEl = document.getElementById('prompt-label');
 
-    if (!outputEl || !inputEl || !promptLabelEl) {
-      console.error('[UI ERROR] Terminal HTML elements not found! Check your IDs.');
-      return;
+    const formEl = document.getElementById('terminal-form');
+    
+
+    if (!outputEl || !inputEl || !promptLabelEl || !formEl) {
+    console.error('[UI ERROR] Terminal HTML elements not found!');
+    return;
+  }
+
+  store.subscribe((state, batch) => this.render(state, batch));
     }
 
     // 2. DAFTARKAN UI SEBAGAI SUBSCRIBER KOTAK PUSAT (Push Pattern)
     store.subscribe((state, batch) => this.render(state, batch));
 
     // 3. Dengerin input keyboard user (Enter key)
-    inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const rawInput = inputEl.value.trim();
-        if (rawInput) {
-          this.handleUserInput(rawInput);
-          inputEl.value = ''; // Kosongkan input box setelah enter
-        }
-      }
+    formEl.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const rawInput = inputEl.value.trim();
+    if (rawInput) {
+    this.handleUserInput(rawInput);
+    inputEl.value = '';
+    }
     });
+
+ this.render(store.getState(), [{ action: 'INITIAL_BOOT', caller: 'ui/terminal.js' }]);
+}
 
     // 4. Pemicu Pertama (Initial Hydration) agar layar langsung terisi data awal
     this.render(store.getState(), [{ action: 'INITIAL_BOOT', caller: 'ui/terminal.js' }]);
