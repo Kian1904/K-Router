@@ -67,12 +67,13 @@ async function handleCommand(rawInput) {
     return;
   }
 
-  // Ambil arguments array untuk subcommand primitive
+  // Mengambil arguments array untuk pencocokan subcommand manual
   const args = trimInput.split(' ');
   
   // Panggil parser CLI sakti kita di sini
   const cli = parseCLIInput(rawInput);
 
+  // Proteksi Gerbang Token Keamanan untuk Rute API Sensitif
   if (['/dashboard', '/analytics', '/models', '/chat', '/search', '/repo', '/debug'].includes(cli.command) && !token) {
     printLine("Error: Akses ditolak. Jalankan perintah: /auth [TOKEN_LO]", "error-msg");
     return;
@@ -85,19 +86,21 @@ async function handleCommand(rawInput) {
 
     case '/help':
       printLine('===================== K-ROUTER CLI ADVANCED MANUAL =====================');
-      printLine('  /help                           Tampilkan panduan ini');
-      printLine('  /clear                          Bersihkan layar');
+      printLine('  /help                           Tampilkan panduan manual ini');
+      printLine('  /clear                          Bersihkan layar monitor terminal');
       printLine('  /auth [Token]                   Input token keamanan gerbang router');
-      printLine('  /models                         List semua model terkelompok');
-      printLine('  /use [model_id]                 Kunci chat ke model tertentu');
-      printLine('  /effort [low/medium/high]       Ubah default effort global');
-      printLine('  /search [query]                 Cari info real-time via Tavily');
-      printLine('  /agent status                   Cek dashboard status Multi-Agent');
-      printLine('  /agent run [tugas]              Jalankan pipeline otomatisasi agen');
-      printLine('  /repo set [gh_token] [owner] [repo]  Konek terowongan ke GitHub API');
-      printLine('  /repo [path_folder]             Intip struktur file repository');
+      printLine('  /models                         List semua model terkelompok (ASCII Tree)');
+      printLine('  /use [model_id]                 Kunci sesi chat ke model target tertentu');
+      printLine('  /effort [low/medium/high]       Ubah status default effort token global');
+      printLine('  /search [query]                 Cari info real-time via terowongan Tavily');
+      printLine('  /dashboard                      Tarik log performa global router (24 Jam)');
+      printLine('  /analytics                      Tampilkan grafik distribusi alokasi token');
+      printLine('  /agent status                   Cek status arsitektur Multi-Agent');
+      printLine('  /agent run [tugas]              Jalankan pipeline otomatisasi multi-agent');
+      printLine('  /repo set [gh_token] [owner] [repo]  Konek integrasi ke GitHub API');
+      printLine('  /repo [path_folder]             Intip struktur file dari repository');
       printLine('  /debug [path_file]              Autopilot bug scanner pada target file');
-      printLine('  /chat [opsi] [pesan]            Kirim pesan ke AI');
+      printLine('  /chat [opsi] [pesan]            Kirim instruksi pesan langsung ke AI');
       printLine('     Opsi Tersedia:');
       printLine('       -e, --effort [level]       Override effort khusus untuk chat ini');
       printLine('       -m, --model [id]           Override model khusus untuk chat ini');
@@ -111,7 +114,113 @@ async function handleCommand(rawInput) {
       } else {
         token = cli.payload;
         localStorage.setItem('kr_token', token);
-        printLine('Success: Token berhasil diverifikasi!', 'sys-greet');
+        printLine('Success: Token keamanan berhasil diverifikasi dan disimpan!', 'sys-greet');
+      }
+      break;
+
+    case '/effort':
+      const targetEffort = args[1]?.toLowerCase();
+      if (!['low', 'medium', 'high'].includes(targetEffort)) {
+        printLine('Error: Pilihan effort tidak valid. Gunakan low, medium, atau high.', 'error-msg');
+        return;
+      }
+      currentEffort = targetEffort;
+      localStorage.setItem('kr_default_effort', currentEffort);
+      printLine(`Success: Level konsumsi token global diubah menjadi [${currentEffort.toUpperCase()}].`, 'sys-greet');
+      break;
+
+    case '/use':
+      const targetId = args[1];
+      if (!targetId) {
+        printLine('Error: Masukkan ID model target. Contoh: /use google_gemini', 'error-msg');
+        return;
+      }
+      if (targetId === 'auto_router') {
+        selectedModelId = 'auto_router';
+        promptLabel.innerText = `krouter_cli[auto_router]:~$`;
+        printLine('Success: Jalur dialihkan kembali ke Auto Router default.', 'sys-greet');
+        return;
+      }
+      selectedModelId = targetId;
+      promptLabel.innerText = `krouter_cli[${targetId}]:~$`;
+      printLine(`Success: Sesi operasional dikunci ke model [${targetId}].`, 'info-msg');
+      break;
+
+    case '/models':
+      printLine('Fetching and structuralizing models tree layout...');
+      try {
+        const res = await fetch('/api/status', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const data = await res.json();
+        if (typeof renderModelsTree === 'function') {
+          renderModelsTree(data.providers || [], selectedModelId);
+        } else {
+          printLine('Error: Modul cli-models.js gagal di-load.', 'error-msg');
+        }
+      } catch(err) {
+        printLine(`Failed to cluster models tree: ${err.message}`, 'error-msg');
+      }
+      break;
+
+    case '/dashboard':
+      printLine('Querying performance logs from database core...');
+      try {
+        const res = await fetch('/api/log?range=24h&limit=5', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+        const data = await res.json();
+        if (typeof renderTextDashboard === 'function') {
+          renderTextDashboard(data);
+        } else {
+          printLine('Error: Modul cli-stats.js gagal di-load.', 'error-msg');
+        }
+      } catch(err) {
+        printLine(`Dashboard log fetch failed: ${err.message}`, 'error-msg');
+      }
+      break;
+
+    case '/analytics':
+      printLine('Entering analytics visualization mode...');
+      try {
+        const res = await fetch('/api/log?range=7d&limit=10', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+        const data = await res.json();
+        if (typeof renderTextAnalytics === 'function') {
+          renderTextAnalytics(data);
+        } else {
+          printLine('Error: Modul cli-stats.js gagal di-load.', 'error-msg');
+        }
+      } catch(err) {
+        printLine(`Analytics compilation failed: ${err.message}`, 'error-msg');
+      }
+      break;
+
+    case '/search':
+      if (!cli.payload) {
+        printLine('Error: Masukkan kata kunci. Contoh: /search cuaca Jakarta', 'error-msg');
+        return;
+      }
+      printLine(`Tavily Engine: Menelusuri web untuk "${cli.payload}"...`);
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ query: cli.payload })
+        });
+        if (!res.ok) throw new Error(`Server failure ${res.status}`);
+        const data = await res.json();
+        
+        printLine(`\n[=== HASIL PENCARIAN TAVILY ===]`, 'sys-greet');
+        if (data.answer) printLine(`💡 Ringkasan AI: ${data.answer}\n`, 'info-msg');
+        if (data.results && data.results.length > 0) {
+          data.results.forEach((r, i) => {
+            printLine(`${i + 1}. ${r.title}`);
+            printLine(`   ${r.url}`, 'cmd-line');
+            printLine(`   ${r.content.substring(0, 120)}...\n`);
+          });
+        }
+        printLine('[========================================================]\n');
+      } catch (err) {
+        printLine(`Search crash: ${err.message}`, 'error-msg');
       }
       break;
 
@@ -154,43 +263,13 @@ async function handleCommand(rawInput) {
       }
       break;
 
-    case '/search':
-      if (!cli.payload) {
-        printLine('Error: Masukkan kata kunci. Contoh: /search cuaca Jakarta', 'error-msg');
-        return;
-      }
-      printLine(`Tavily Engine: Menelusuri web untuk "${cli.payload}"...`);
-      try {
-        const res = await fetch('/api/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ query: cli.payload })
-        });
-        if (!res.ok) throw new Error(`Server failure ${res.status}`);
-        const data = await res.json();
-        
-        printLine(`\n[=== HASIL PENCARIAN TAVILY ===]`, 'sys-greet');
-        if (data.answer) printLine(`💡 Ringkasan AI: ${data.answer}\n`, 'info-msg');
-        if (data.results && data.results.length > 0) {
-          data.results.forEach((r, i) => {
-            printLine(`${i + 1}. ${r.title}`);
-            printLine(`   ${r.url}`, 'cmd-line');
-            printLine(`   ${r.content.substring(0, 120)}...\n`);
-          });
-        }
-        printLine('[========================================================]\n');
-      } catch (err) {
-        printLine(`Search crash: ${err.message}`, 'error-msg');
-      }
-      break;
-
     case '/agent':
       const agentSub = args[1]?.toLowerCase();
       if (agentSub === 'status') {
         if (typeof renderAgentStatus === 'function') {
           renderAgentStatus();
         } else {
-          printLine('Error: Modul cli-agents.js belum ter-load di index.html.', 'error-msg');
+          printLine('Error: Modul cli-agents.js belum ter-load.', 'error-msg');
         }
       } else if (agentSub === 'run') {
         const agentTask = args.slice(2).join(' ');
@@ -201,7 +280,7 @@ async function handleCommand(rawInput) {
         if (typeof runMultiAgentWorkflow === 'function') {
           runMultiAgentWorkflow(agentTask);
         } else {
-          printLine('Error: Modul cli-agents.js belum ter-load di index.html.', 'error-msg');
+          printLine('Error: Modul cli-agents.js belum ter-load.', 'error-msg');
         }
       } else {
         printLine('Panduan Perintah Agen:', 'info-msg');
@@ -220,7 +299,6 @@ async function handleCommand(rawInput) {
         localStorage.setItem('kr_gh_owner', args[3]);
         localStorage.setItem('kr_gh_repo', args[4]);
         
-        // Update live variable di modul repo jika ter-load
         if (typeof githubToken !== 'undefined') {
           githubToken = args[2]; repoOwner = args[3]; repoName = args[4];
         }
@@ -229,7 +307,7 @@ async function handleCommand(rawInput) {
         if (typeof listRepositoryFiles === 'function') {
           await listRepositoryFiles(args[1] || '');
         } else {
-          printLine('Error: Modul cli-repo.js belum ter-load di index.html.', 'error-msg');
+          printLine('Error: Modul cli-repo.js belum ter-load.', 'error-msg');
         }
       }
       break;
@@ -242,7 +320,7 @@ async function handleCommand(rawInput) {
       if (typeof debugTargetFile === 'function') {
         await debugTargetFile(args[1]);
       } else {
-        printLine('Error: Modul cli-repo.js belum ter-load di index.html.', 'error-msg');
+        printLine('Error: Modul cli-repo.js belum ter-load.', 'error-msg');
       }
       break;
 
