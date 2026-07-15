@@ -2,9 +2,9 @@
 let virtualWorkspace = {
   initialized: false,
   agents: {
-    antigravity: { role: 'Builder (Complex App)', model: 'anthropic_sonnet', status: 'GOOD', icon: '▲' },
-    blackbox: { role: 'Writer (Documentation)', model: 'google_flash', status: 'NEEDS WORK', icon: '█' },
-    copilot: { role: 'Executor (Simple App)', model: 'phi_4', status: 'STILL TESTING', icon: '🤖' }
+    antigravity: { role: 'Builder (Complex App)', model: 'z-ai/glm-5.2', status: 'GOOD', icon: '▲' },
+    blackbox: { role: 'Writer (Documentation)', model: 'gemini-2.5-flash', status: 'NEEDS WORK', icon: '█' },
+    copilot: { role: 'Executor (Simple App)', model: 'google/gemma-4-31B-it', status: 'STILL TESTING', icon: '🤖' }
   },
   currentTask: null,
   logs: []
