@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0F0F0F">
+  <title>K's Router</title>
+  <link rel="stylesheet" href="/public/css/main.css">
+</head>
+<body>
+
+<div id="terminal">
+
+  <header id="header">
+    <span id="header-title">K's Router</span>
+    <span id="header-meta">v1.0</span>
+  </header>
+
+  <div id="output" role="log" aria-live="polite"></div>
+
+  <div id="input-area">
+    <span id="prompt">krouter[auto]:~$</span>
+    <input
+      id="input"
+      type="text"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="none"
+      spellcheck="false"
+      placeholder="type /help for commands"
+      aria-label="Terminal input"
+    >
+  </div>
+
+</div>
+
+<!-- Load order matters: dependencies before dependents -->
+<script src="/public/js/state.js"></script>
+<script src="/public/js/batch.js"></script>
+<script src="/public/js/logger.js"></script>
+<script src="/public/js/auth.js"></script>
+<script src="/public/js/circuit.js"></script>
+<script src="/public/js/providers.js"></script>
+<script src="/public/js/core.js"></script>
+<script src="/public/js/terminal.js"></script>
+<script src="/public/js/init.js"></script>
+
+</body>
+</html>
