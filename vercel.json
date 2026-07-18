@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/chat.js":   { "maxDuration": 60 },
+    "api/status.js": { "maxDuration": 15 },
+    "api/search.js": { "maxDuration": 20 }
+  },
+  "rewrites": [
+    { "source": "/",     "destination": "/public/index.html" },
+    { "source": "/chat", "destination": "/public/chat.html"  }
+  ]
+}
