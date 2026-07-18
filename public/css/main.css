@@ -1,0 +1,133 @@
+/* ─── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── Variables ──────────────────────────────────────────────────────────── */
+:root {
+  --bg:       #0F0F0F;
+  --surface:  #161616;
+  --border:   rgba(255, 255, 255, 0.08);
+  --text:     #E2E8F0;
+  --muted:    #6B7280;
+  --green:    #4ADE80;
+  --red:      #F87171;
+  --yellow:   #FBBF24;
+  --blue:     #60A5FA;
+  --bright:   #F8FAFC;
+  --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-size: 13px;
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size);
+  line-height: 1.6;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+#terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+#header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+#header-title {
+  color: var(--green);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#header-meta {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+/* ─── Output ─────────────────────────────────────────────────────────────── */
+#output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+#output::-webkit-scrollbar { width: 3px; }
+#output::-webkit-scrollbar-track { background: transparent; }
+#output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Terminal lines ─────────────────────────────────────────────────────── */
+.term-line {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 1.6em;
+  font-size: var(--font-size);
+}
+
+.term-gap  { min-height: 0.6em; display: block; }
+
+/* ─── Colors ─────────────────────────────────────────────────────────────── */
+.term-green  { color: var(--green);  }
+.term-red    { color: var(--red);    }
+.term-yellow { color: var(--yellow); }
+.term-blue   { color: var(--blue);   }
+.term-muted  { color: var(--muted);  }
+.term-bright { color: var(--bright); font-weight: 600; }
+.term-cmd    { color: var(--green);  }
+
+/* ─── Input area ─────────────────────────────────────────────────────────── */
+#input-area {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+#prompt {
+  color: var(--green);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: var(--font-size);
+  user-select: none;
+}
+
+#input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size);
+  outline: none;
+  caret-color: var(--green);
+  min-width: 0;
+}
+
+#input::placeholder { color: var(--muted); }
+
+/* ─── Mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  :root { --font-size: 12px; }
+  #output { padding: 0.75rem; }
+  #input-area { padding: 0.5rem 0.75rem; }
+}
