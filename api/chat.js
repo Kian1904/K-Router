@@ -9,6 +9,15 @@ const {
   fromGeminiResponse
 } = require('./_providers');
 
+// ─── Effort Map ───────────────────────────────────────────────────────────────
+// max_tokens capped at 8192 — safe limit across all free-tier providers
+
+const EFFORT_MAP = {
+  low:    { temperature: 0.3, max_tokens: 1024 },
+  medium: { temperature: 0.7, max_tokens: 4096 },
+  high:   { temperature: 0.9, max_tokens: 8192 }
+};
+
 const TIMEOUT_MS = 20000;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -34,11 +43,16 @@ async function fetchWithTimeout(url, options, timeoutMs) {
 
 // ─── Single-provider call ─────────────────────────────────────────────────────
 
-async function callProvider(provider, messages, apiKey) {
+async function callProvider(provider, messages, apiKey, effort) {
+  const effortParams = EFFORT_MAP[effort] || EFFORT_MAP.medium;
+
   if (provider.type === 'google') {
-    // ── Gemini native format ──────────────────────────────────────────────────
     const body = toGeminiContents(messages);
-    const url  = provider.endpoint + '?key=' + encodeURIComponent(apiKey);
+    body.generationConfig = {
+      temperature: effortParams.temperature,
+      maxOutputTokens: effortParams.max_tokens
+    };
+    const url = provider.endpoint + '?key=' + encodeURIComponent(apiKey);
 
     const res = await fetchWithTimeout(url, {
       method: 'POST',
@@ -68,8 +82,10 @@ async function callProvider(provider, messages, apiKey) {
     }
 
     const body = {
-      model: provider.model,
-      messages: messages
+      model:       provider.model,
+      messages:    messages,
+      temperature: effortParams.temperature,
+      max_tokens:  effortParams.max_tokens
     };
 
     const res = await fetchWithTimeout(provider.endpoint, {
@@ -147,6 +163,9 @@ module.exports = async function handler(req, res) {
   const body = req.body || {};
   const messages = body.messages;
   const providerPref = body.provider;
+  const effort = (typeof body.effort === 'string' && EFFORT_MAP[body.effort])
+    ? body.effort
+    : 'medium';
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'Bad request: messages must be a non-empty array' });
@@ -189,7 +208,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      const result = await callProvider(provider, messages, apiKey);
+      const result = await callProvider(provider, messages, apiKey, effort);
 
       result._meta = {
         intended:  startId,
