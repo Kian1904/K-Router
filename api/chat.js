@@ -1,7 +1,3 @@
-'use strict';
-
-const Sentry = require('./_sentry');
-
 const {
   PROVIDERS,
   MODEL_ALIASES,
