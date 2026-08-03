@@ -115,7 +115,8 @@ const MODEL_ALIASES = {
   'codestral':  'mistral',
   'mistral':    'mistral',
   'laguna_xs':  'laguna_xs',
-  'laguna_m1':  'laguna_m1'
+  'laguna_m1':  'laguna_m1',
+  'deepseek_r1': 'deepseek_r1'
 };
 
 // ─── Cascade order ────────────────────────────────────────────────────────────
