@@ -86,9 +86,19 @@ const PROVIDERS = {
     type:     'openai',
     priority: 8,
     backup:   true
+  },
+  deepseek_r1: { 
+    id:        'deepseek_r1',
+    name:      'hunging face · deepseek r.1',
+    model:     'deepseek-ai/DeepSeek-R1',
+    endpoint:  'https://api-inference.huggingface.co/v1/chat/completions',
+    envKey:    'HUGGINGFACE_API_KEY',
+    type:      'openai',
+    priority:  9,
+    backup:    false
   }
 };
-
+    
 // ─── Model aliases (for /use command and provider= body param) ────────────────
 
 const MODEL_ALIASES = {
