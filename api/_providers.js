@@ -87,8 +87,8 @@ const PROVIDERS = {
     priority: 8,
     backup:   true
   },
-  qwen_3.6: { 
-    id:        'qwen_3.6',
+  qwen: { 
+    id:        'qwen',
     name:      'Groq · qwen 3.6',
     model:     'qwen/qwen3.6-27b',
     endpoint:  'https://api.groq.com/openai/v1/chat/completions',
@@ -116,7 +116,7 @@ const MODEL_ALIASES = {
   'mistral':    'mistral',
   'laguna_xs':  'laguna_xs',
   'laguna_m1':  'laguna_m1',
-  'qwen_3.6': 'qwen_3.6'
+  'qwen':       'qwen'
 };
 
 // ─── Cascade order ────────────────────────────────────────────────────────────
