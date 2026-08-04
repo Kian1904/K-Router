@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Providers — K's Router</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif:opsz@12..24&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas:    #f9fbf2;
+  --meadow:    #eff2e5;
+  --ink:       #130e30;
+  --slate:     #5f5c6e;
+  --border:    rgba(19,14,48,0.10);
+  --surface:   #ffffff;
+  --border-ui: #eaeaea;
+  --text:      #111111;
+  --muted:     #787774;
+  --green-bg:  #edf3ec; --green-tx: #346538;
+  --red-bg:    #fdebec; --red-tx:   #9f2f2d;
+  --yellow-bg: #fbf3db; --yellow-tx:#956400;
+  --blue-bg:   #e1f3fe; --blue-tx:  #1f6c9f;
+  --sidebar-w: 220px;
+  --pill:      1440px;
+  --radius:    12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+.app{display:flex;min-height:100vh}
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; 
+}
+
+  body.page-loaded {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Taktik feedback klik untuk semua tombol, select, dan menu navigasi */
+button, .pill-opt, .btn, select, .nav-item, .bottom-nav-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+button:active, .pill-opt:active, .btn:active, .nav-item:active, .bottom-nav-item:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
+  
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);background:var(--meadow);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 12px;position:fixed;top:0;left:0;height:100vh;z-index:100;gap:32px}
+.brand-label{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:4px}
+.brand-name{font-family:'Hedvig Letters Serif',serif;font-size:20px;color:var(--ink);letter-spacing:-.01em;line-height:1.15}
+.nav-section{display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-label{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding:0 12px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--pill);text-decoration:none;color:var(--ink);font-size:14px;font-weight:500;transition:background .15s}
+.nav-item:hover{background:rgba(19,14,48,.06)}
+.nav-item.active{background:var(--ink);color:#fff}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{border-top:1px solid var(--border);padding-top:16px}
+.sidebar-footer a{display:flex;align-items:center;gap:10px;color:var(--slate);text-decoration:none;font-size:13px;font-weight:500;border-radius:var(--pill);padding:9px 12px;transition:background .15s,color .15s}
+.sidebar-footer a:hover{background:rgba(19,14,48,.06);color:var(--ink)}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);flex:1;padding:40px 48px;max-width:calc(100% - var(--sidebar-w))}
+.page-header{margin-bottom:32px}
+.page-title{font-family:'Hedvig Letters Serif',serif;font-size:32px;color:var(--ink);letter-spacing:-.32px;line-height:1.15}
+.page-sub{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* Summary row */
+.summary-row{display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap}
+.summary-pill{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border-ui);border-radius:var(--pill);padding:7px 14px;font-size:13px;color:var(--muted)}
+.summary-pill strong{color:var(--text);font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-ready{background:var(--green-tx)}
+.dot-down{background:var(--red-tx)}
+
+/* Cards grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;min-height:200px}
+.card{background:var(--surface);border:1px solid var(--border-ui);border-radius:var(--radius);padding:24px;opacity:0;transform:translateY(10px);animation:rise .5s cubic-bezier(.16,1,.3,1) forwards;display:flex;flex-direction:column;gap:16px}
+@keyframes rise{to{opacity:1;transform:translateY(0)}}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.card-name{font-family:'Hedvig Letters Serif',serif;font-size:19px;color:var(--ink);letter-spacing:-.01em;line-height:1.2}
+.badge{display:inline-block;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:var(--pill);white-space:nowrap;flex-shrink:0}
+.badge-ready{background:var(--green-bg);color:var(--green-tx)}
+.badge-notset{background:var(--red-bg);color:var(--red-tx)}
+
+.card-model{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);word-break:break-all;line-height:1.5}
+
+/* Stats row inside card */
+.card-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:4px;border-top:1px solid var(--border-ui)}
+.stat-item{}
+.stat-item-label{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.stat-item-value{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:500;color:var(--ink)}
+.stat-item-value.muted{color:var(--muted)}
+
+/* Token bar */
+.token-row{display:flex;align-items:center;gap:8px}
+.token-bar-bg{flex:1;height:3px;background:var(--border-ui);border-radius:2px}
+.token-bar-fill{height:3px;border-radius:2px;background:var(--ink);opacity:.25;transition:width .5s ease}
+
+/* Auth overlay */
+.overlay{position:fixed;inset:0;background:var(--canvas);display:flex;align-items:center;justify-content:center;z-index:999}
+.overlay-box{background:var(--surface);border:1px solid var(--border-ui);border-radius:var(--radius);padding:40px;width:320px;text-align:center}
+.overlay-title{font-family:'Hedvig Letters Serif',serif;font-size:22px;color:var(--ink);margin-bottom:8px}
+.overlay-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.overlay input{width:100%;padding:10px 14px;border:1px solid var(--border-ui);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--canvas);color:var(--ink);outline:none;margin-bottom:12px}
+.overlay input:focus{border-color:var(--ink)}
+.overlay button{width:100%;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer}
+.overlay-err{font-size:12px;color:var(--red-tx);margin-top:8px;display:none}
+.empty-state{text-align:center;padding:64px 24px;color:var(--muted);font-size:13px}
+
+/* Bottom nav */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--meadow);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom,8px);z-index:200;transform:translateZ(0);-webkit-transform:translateZ(0)}
+.bottom-nav-items{display:flex;justify-content:space-around}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none;color:var(--slate);font-size:10px;font-weight:500;padding:6px 12px;min-width:56px}
+.bottom-nav-item.active{color:var(--ink)}
+.bottom-nav-item svg{opacity:.5}
+.bottom-nav-item.active svg{opacity:1}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .bottom-nav{display:block}
+  .main{margin-left:0;max-width:100%;padding:24px 16px 88px}
+  .page-title{font-size:24px}
+  .cards-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="overlay-title">K's Router</div>
+    <div class="overlay-sub">Masukkan token untuk akses</div>
+    <input type="password" id="tokenInput" placeholder="Bearer token..." autocomplete="off">
+    <button onclick="submitToken()">Masuk</button>
+    <div class="overlay-err" id="overlayErr">Token salah.</div>
+  </div>
+</div>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="brand-label">AI Router</div>
+      <div class="brand-name">K's Router</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Menu</div>
+      <a href="/dashboard.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/chat.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </a>
+      <a href="/providers.html" class="nav-item active">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Providers
+      </a>
+      <a href="/analytics.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </a>
+      <a href="/users.html" class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Users
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <a href="/settings.html">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </a>
+    </div>
+  </nav>
+
+  <nav class="bottom-nav">
+    <div class="bottom-nav-items">
+      <a href="/dashboard.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/chat.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </a>
+      <a href="/providers.html" class="bottom-nav-item active">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Providers
+      </a>
+      <a href="/analytics.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </a>
+      <a href="/settings.html" class="bottom-nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </a>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <h1 class="page-title">Providers</h1>
+      <p class="page-sub" id="pageSubtitle">Memuat status provider…</p>
+    </div>
+
+    <div class="summary-row" id="summaryRow"></div>
+    <div class="cards-grid" id="cardsGrid">
+      <div class="empty-state">Memuat…</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let token = localStorage.getItem('kr_token') || ''
+
+  function checkAuth() {
+    if (token) {
+      document.getElementById('overlay').style.display = 'none'
+      loadProviders()
+    }
+  }
+
+  async function submitToken() {
+    const val = document.getElementById('tokenInput').value.trim()
+    if (!val) return
+    try {
+      const res = await fetch('/api/status', {
+        headers: { Authorization: 'Bearer ' + val }
+      })
+      if (res.status === 401) {
+        document.getElementById('overlayErr').style.display = 'block'
+        return
+      }
+      token = val
+      localStorage.setItem('kr_token', token)
+      document.getElementById('overlay').style.display = 'none'
+      loadProviders()
+    } catch {
+      document.getElementById('overlayErr').style.display = 'block'
+    }
+  }
+
+  document.getElementById('tokenInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitToken()
+  })
+
+  function fmtNum(n) {
+    if (n == null || n === 0) return '—'
+    return n.toLocaleString()
+  }
+
+  async function loadProviders() {
+    try {
+      const headers = { Authorization: 'Bearer ' + token }
+
+      const [statusRes, logsRes] = await Promise.all([
+        fetch('/api/status', { headers }),
+        fetch('/api/log?range=7d&limit=1000', { headers })
+      ])
+
+      if (statusRes.status === 401 || logsRes.status === 401) {
+        localStorage.removeItem('kr_token')
+        token = ''
+        document.getElementById('overlay').style.display = 'flex'
+        return
+      }
+
+      const statusData = await statusRes.json()
+      const logsData   = await logsRes.json()
+
+      // Build lookup: provider name → stats
+      const statsMap = {}
+      ;(logsData.byProvider || []).forEach(p => {
+        statsMap[p.provider] = p
+      })
+
+      const providers = statusData.providers || []
+      const readyCount = providers.filter(p => p.configured).length
+
+      const maxTokens = Math.max(...Object.values(statsMap).map(s => s.totalTokens || 0), 1)
+
+      const grid = document.getElementById('cardsGrid')
+      if (!providers.length) {
+        grid.innerHTML = '<div class="empty-state">Tidak ada provider ditemukan.</div>'
+        return
+      }
+
+      // Update summary dan grid sekaligus setelah data siap
+      document.getElementById('pageSubtitle').textContent =
+        `${readyCount} dari ${providers.length} provider aktif — data 7 hari terakhir`
+
+      document.getElementById('summaryRow').innerHTML = `
+        <div class="summary-pill"><span class="dot dot-ready"></span><strong>${readyCount}</strong>&nbsp;ready</div>
+        <div class="summary-pill"><span class="dot dot-down"></span><strong>${providers.length - readyCount}</strong>&nbsp;not configured</div>
+      `
+
+      grid.innerHTML = providers.map((p, i) => {
+        const s = statsMap[p.name] || null
+        const delay = i * 50
+
+        return `
+        <div class="card" style="animation-delay:${delay}ms">
+          <div class="card-top">
+            <div class="card-name">${p.name}</div>
+            <span class="badge ${p.configured ? 'badge-ready' : 'badge-notset'}">
+              ${p.configured ? 'Ready' : 'Not set'}
+            </span>
+          </div>
+
+          <div class="card-model">${p.model || '—'}</div>
+
+          <div class="card-stats">
+            <div class="stat-item">
+              <div class="stat-item-label">Requests</div>
+              <div class="stat-item-value ${s ? '' : 'muted'}">${s ? s.requests : '—'}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-item-label">Success</div>
+              <div class="stat-item-value ${s ? '' : 'muted'}">${s ? s.successRate + '%' : '—'}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-item-label">Avg Latency</div>
+              <div class="stat-item-value ${s ? '' : 'muted'}">${s && s.avgLatency ? s.avgLatency + ' ms' : '—'}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-item-label">Total Tokens</div>
+              <div class="stat-item-value ${s ? '' : 'muted'}">${s ? fmtNum(s.totalTokens) : '—'}</div>
+            </div>
+          </div>
+
+          ${s && s.totalTokens ? `
+          <div class="token-row">
+            <div class="token-bar-bg">
+              <div class="token-bar-fill" style="width:${Math.round((s.totalTokens / maxTokens) * 100)}%"></div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap">
+              in ${fmtNum(s.tokensIn)} · out ${fmtNum(s.tokensOut)}
+            </span>
+          </div>` : ''}
+        </div>`
+      }).join('')
+
+    } catch (err) {
+      document.getElementById('cardsGrid').innerHTML =
+        `<div class="empty-state">Gagal load: ${err.message}</div>`
+    }
+  }
+
+  checkAuth()
+
+  // Pemicu transisi halaman saat WebView selesai memuat dokumen
+  document.addEventListener("DOMContentLoaded", () => {
+    requestAnimationFrame(() => {
+      document.body.classList.add("page-loaded");
+    });
+  });
+</script>
+</body>
+</html>
