@@ -39,9 +39,9 @@
       id: 'laguna_m1', name: 'Poolside · Laguna M.1',
       model: 'poolside/laguna-m.1:free', priority: 8, backup: true
     },
-    deepseek_r1: {
-      id: 'deepseek_r1', name: 'Deepseek · Deepseek r.1',
-      model: 'deepseek-ai/DeepSeek-R1', priority: 9, backup: false
+    qwen_3.6: {
+      id: 'qwen_3 6', name: 'Groq · qwen 3.6',
+      model: 'qwen/qwen3.6-27b', priority: 9, backup: false
     }
   };
 
@@ -61,7 +61,7 @@
     'mistral':    'mistral',
     'laguna_xs':  'laguna_xs',
     'laguna_m1':  'laguna_m1',
-    'deepseek_r1': 'deepseek_r1'
+    'qwen_3.6':   'qwen_3.6'
   };
 
   // ── Resolve alias input to provider id ──────────────────────────────────────
