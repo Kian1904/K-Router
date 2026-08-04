@@ -89,7 +89,7 @@ const PROVIDERS = {
   },
   qwen_3.6: { 
     id:        'qwen_3.6',
-    name:      'groq · qwen_3.6',
+    name:      'Groq · qwen 3.6',
     model:     'qwen/qwen3.6-27b',
     endpoint:  'https://api.groq.com/openai/v1/chat/completions',
     envKey:    'GROQ_API_KEY',
