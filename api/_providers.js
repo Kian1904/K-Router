@@ -102,7 +102,7 @@ const PROVIDERS = {
     name:      'Groq · compound',
     model:     'groq/compound',
     endpoint:  'https://api.groq.com/openai/v1/chat/completions',
-    envkey:    'GROQ_API_KEY',
+    envKey:    'GROQ_API_KEY',
     type:      'openai',
     priority:   10,
     backup:     false
