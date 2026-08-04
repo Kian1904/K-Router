@@ -104,9 +104,9 @@ function buildCascade(preferredId) {
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Max-Age', '86400');
 }
-
 // ─── Fire-and-forget usage log ────────────────────────────────────────────────
 // Sends a log entry to /api/log after every successful response.
 // Does NOT await — never blocks or affects response time.
@@ -133,7 +133,7 @@ function fireLog(entry) {
 module.exports = async function handler(req, res) {
   setCors(res);
 
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed: expected POST' });
   }
