@@ -87,12 +87,12 @@ const PROVIDERS = {
     priority: 8,
     backup:   true
   },
-  deepseek_r1: { 
-    id:        'deepseek_r1',
-    name:      'hunging face · deepseek r.1',
-    model:     'deepseek-ai/DeepSeek-R1',
-    endpoint:  'https://api-inference.huggingface.co/v1/chat/completions',
-    envKey:    'HUGGINGFACE_API_KEY',
+  qwen_3.6: { 
+    id:        'qwen_3.6',
+    name:      'groq_qwen_3.6',
+    model:     'qwen/qwen3.6-27b',
+    endpoint:  'https://api.groq.com/openai/v1/chat/completions',
+    envKey:    'GROQ_API_KEY',
     type:      'openai',
     priority:  9,
     backup:    false
@@ -116,7 +116,7 @@ const MODEL_ALIASES = {
   'mistral':    'mistral',
   'laguna_xs':  'laguna_xs',
   'laguna_m1':  'laguna_m1',
-  'deepseek_r1': 'deepseek_r1'
+  'qwen_3.6': 'qwen_3.6'
 };
 
 // ─── Cascade order ────────────────────────────────────────────────────────────
