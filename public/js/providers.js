@@ -42,6 +42,10 @@
     qwen: {
       id: 'qwen', name: 'Groq · qwen 3.6',
       model: 'qwen/qwen3.6-27b', priority: 9, backup: false
+    },
+    compound: {
+      id: 'compound', name: 'Groq · compound',
+      model: 'groq/compound', priority: 10, backup: false
     }
   };
 
@@ -62,6 +66,7 @@
     'laguna_xs':  'laguna_xs',
     'laguna_m1':  'laguna_m1',
     'qwen':       'qwen'
+    'compound':   'compound'
   };
 
   // ── Resolve alias input to provider id ──────────────────────────────────────
