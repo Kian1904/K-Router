@@ -65,7 +65,7 @@
     'mistral':    'mistral',
     'laguna_xs':  'laguna_xs',
     'laguna_m1':  'laguna_m1',
-    'qwen':       'qwen'
+    'qwen':       'qwen',
     'compound':   'compound'
   };
 
