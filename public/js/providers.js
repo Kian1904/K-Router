@@ -39,8 +39,8 @@
       id: 'laguna_m1', name: 'Poolside · Laguna M.1',
       model: 'poolside/laguna-m.1:free', priority: 8, backup: true
     },
-    qwen_3.6: {
-      id: 'qwen_3 6', name: 'Groq · qwen 3.6',
+    qwen: {
+      id: 'qwen', name: 'Groq · qwen 3.6',
       model: 'qwen/qwen3.6-27b', priority: 9, backup: false
     }
   };
@@ -61,7 +61,7 @@
     'mistral':    'mistral',
     'laguna_xs':  'laguna_xs',
     'laguna_m1':  'laguna_m1',
-    'qwen_3.6':   'qwen_3.6'
+    'qwen':       'qwen'
   };
 
   // ── Resolve alias input to provider id ──────────────────────────────────────
