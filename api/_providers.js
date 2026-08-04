@@ -96,6 +96,16 @@ const PROVIDERS = {
     type:      'openai',
     priority:  9,
     backup:    false
+  },
+  compound: {
+    id:        'compound',
+    name:      'Groq · compound',
+    model:     'groq/compound',
+    endpoint:  'https://api.groq.com/openai/v1/chat/completions',
+    envkey:    'GROQ_API_KEY',
+    type:      'openai',
+    priority:  '10',
+    backup:     false
   }
 };
     
@@ -117,6 +127,7 @@ const MODEL_ALIASES = {
   'laguna_xs':  'laguna_xs',
   'laguna_m1':  'laguna_m1',
   'qwen':       'qwen'
+  'compound':   'compound'
 };
 
 // ─── Cascade order ────────────────────────────────────────────────────────────
