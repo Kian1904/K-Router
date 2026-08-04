@@ -104,7 +104,7 @@ const PROVIDERS = {
     endpoint:  'https://api.groq.com/openai/v1/chat/completions',
     envkey:    'GROQ_API_KEY',
     type:      'openai',
-    priority:  '10',
+    priority:   10,
     backup:     false
   }
 };
@@ -126,7 +126,7 @@ const MODEL_ALIASES = {
   'mistral':    'mistral',
   'laguna_xs':  'laguna_xs',
   'laguna_m1':  'laguna_m1',
-  'qwen':       'qwen'
+  'qwen':       'qwen',
   'compound':   'compound'
 };
 
