@@ -107,7 +107,7 @@ const PROVIDERS = {
     priority:   10,
     backup:     false
   },
-  gpt: {
+  gpt_oss: {
     id:        'gpt_oss',
     name:      'Groq · ChatGPT',
     model:     'openai/gpt-oss-120b',
@@ -138,7 +138,7 @@ const MODEL_ALIASES = {
   'laguna_m1':  'laguna_m1',
   'qwen':       'qwen',
   'compound':   'compound',
-  'gpt':        'gpt_oss'
+  'gpt_oss':    'gpt_oss'
 };
 
 // ─── Cascade order ────────────────────────────────────────────────────────────
