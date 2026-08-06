@@ -106,7 +106,17 @@ const PROVIDERS = {
     type:      'openai',
     priority:   10,
     backup:     false
-  }
+  },
+  gpt: {
+    id:        'gpt_oss',
+    name:      'Groq · ChatGPT',
+    model:     'openai/gpt-oss-120b',
+    endpoint:  'https://api.groq.com/openai/v1/chat/completions',
+    endKey:    'GROQ_API_KEY',
+    type:      'openai',
+    priority:  11,
+    backup:    false
+  }  
 };
     
 // ─── Model aliases (for /use command and provider= body param) ────────────────
@@ -128,6 +138,7 @@ const MODEL_ALIASES = {
   'laguna_m1':  'laguna_m1',
   'qwen':       'qwen',
   'compound':   'compound'
+  'gpt':        'gpt_oss'
 };
 
 // ─── Cascade order ────────────────────────────────────────────────────────────
