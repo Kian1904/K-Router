@@ -137,7 +137,7 @@ const MODEL_ALIASES = {
   'laguna_xs':  'laguna_xs',
   'laguna_m1':  'laguna_m1',
   'qwen':       'qwen',
-  'compound':   'compound'
+  'compound':   'compound',
   'gpt':        'gpt_oss'
 };
 
